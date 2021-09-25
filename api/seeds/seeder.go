@@ -11,17 +11,17 @@ var user_status = []models.UserStatus{
 	models.UserStatus{
 		LevelName: "Admin",
 		LevelNum: 1,
-		SoftDelete : false
+		SoftDelete : false,
 	},
 	models.UserStatus{
 		LevelName: "User",
 		LevelNum: 5,
-		SoftDelete : false
+		SoftDelete : false,
 	},
 	models.UserStatus{
 		LevelName: "Teller",
 		LevelNum: 6,
-		SoftDelete : True
+		SoftDelete : true,
 	},
 }
 
@@ -31,39 +31,38 @@ var users = []models.User{
 		UserStatusID: 1,
 		Email:    "admin@gmail.com",
 		Password: "password",
-		SoftDelete : false
 		SoftDelete : false,
 	},
 	models.User{
-		Nickname: "Rayhan Kuncoro",
+		Name: "Rayhan Kuncoro",
 		UserStatusID: 2,
 		Email:    "kuncoro@gmail.com",
 		Password: "password",
 		SoftDelete : false,
 	},
 	models.User{
-		Nickname: "Monika Lukiawan",
+		Name: "Monika Lukiawan",
 		UserStatusID: 2,
 		Email:    "monika@gmail.com",
 		Password: "password",
 		SoftDelete : false,
 	},
 	models.User{
-		Nickname: "Yayha Rahmati",
+		Name: "Yayha Rahmati",
 		UserStatusID: 2,
 		Email:    "yahya@gmail.com",
 		Password: "password",
 		SoftDelete : false,
 	},
 	models.User{
-		Nickname: "Dede Kirana",
+		Name: "Dede Kirana",
 		UserStatusID: 2,
 		Email:    "ddee@gmail.com",
 		Password: "password",
 		SoftDelete : false,
 	},
 	models.User{
-		Nickname: "Ade Pratamana",
+		Name: "Ade Pratamana",
 		UserStatusID: 2,
 		Email:    "pratama@gmail.com",
 		Password: "password",
@@ -77,23 +76,23 @@ var course_category=[]models.CourseCategory{
 		SoftDelete : false,
 	},
 	models.CourseCategory{
-		LevelName: "Teknologi",
+		Name: "Teknologi",
 		SoftDelete : false,
 	},
 	models.CourseCategory{
-		LevelName: "Biologi",
+		Name: "Biologi",
 		SoftDelete : false,
 	},
 	models.CourseCategory{
-		LevelName: "Sains",
+		Name: "Sains",
 		SoftDelete : false,
 	},
 	models.CourseCategory{
-		LevelName: "Mutimedia",
+		Name: "Mutimedia",
 		SoftDelete : false,
 	},
 	models.CourseCategory{
-		LevelName: "Kimia",
+		Name: "Kimia",
 		SoftDelete : true,
 	},
 }
@@ -101,50 +100,46 @@ var course_category=[]models.CourseCategory{
 var course = []models.Course{
 	models.Course{
 		CourseCategoryID : 1,
-		User: 2,
+		UserID: 2,
 		Name: "Pencak Silat",
 		Description: "Belajar Pencak Silat dengan baik dan benar selama 3 bulan, course ditempat",
-		Durarion : 3
+		Duration : 3,
 		Price : 300000,
 		IsFree : false,
 		IsOnline : false,
-		OpeningImage : nil,
 		SoftDelete : false,
 	},
 	models.Course{
 		CourseCategoryID : 1,
-		User: 2,
+		UserId: 2,
 		Name: "Renang",
 		Description: "Belajar dasar dasar berenang sampiai bisa, selama 3 bulan, course ditempat",
 		Price : 200000,
-		Durarion : 3
+		Duration : 3,
 		IsFree : false,
 		IsOnline : false,
-		OpeningImage : nil,
 		SoftDelete : false,
 	},
 	models.Course{
 		CourseCategoryID : 2,
-		User: 3,
+		UserId: 3,
 		Name: "Pembelajaran Full stack Javascript",
 		Description: "Pembelajaran Full stack selama 6 bulan",
-		Durarion : 6
+		Duration : 6,
 		Price : 600000,
 		IsFree : false,
 		IsOnline : true,
-		OpeningImage : nil,
 		SoftDelete : false,
 	},
 	models.Course{
 		CourseCategoryID : 2,
-		User: 3,
+		UserId: 3,
 		Name: "Pembelajaran Full stack Python",
 		Description: "Pembelajaran Full stack selama 6 bulan",
-		Durarion : 6
+		Duration : 6,
 		Price : 600000,
 		IsFree : false,
 		IsOnline : true,
-		OpeningImage : nil,
 		SoftDelete : true,
 	},
 }
@@ -154,31 +149,31 @@ var user_course = []models.UserCourse{
 	models.UserCourse{
 		UserID: 2,
 		CourseID: 1,
-		Buy: 1,
+		Buy: true,
 		SoftDelete : false,
 	},
 	models.UserCourse{
 		UserID: 2,
 		CourseID: 2,
-		Buy: 1,
+		Buy: true,
 		SoftDelete : false,
 	},
 	models.UserCourse{
 		UserID: 3,
 		CourseID: 2,
-		Buy: 1,
+		Buy: true,
 		SoftDelete : false,
 	},
 	models.UserCourse{
 		UserID: 4,
 		CourseID: 2,
-		Buy: 1,
+		Buy: true,
 		SoftDelete : false,
 	},
 	models.UserCourse{
 		UserID: 5,
 		CourseID: 4,
-		Buy: 1,
+		Buy: true,
 		SoftDelete : true,
 	},
 }
@@ -228,3 +223,4 @@ func Load(db *gorm.DB) {
 			log.Fatalf("cannot seed users status table: %v", err)
 		}
 	}
+}

@@ -6,8 +6,8 @@ import (
 	"log"
 	"strings"
 	"time"
-
-	"github.com/ach4ndi/onlineplatform/api/UserStatus"
+	
+	//"github.com/ach4ndi/onlineplatform/api/models"
 	"github.com/badoux/checkmail"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
@@ -45,7 +45,7 @@ func (u *User) BeforeSave() error {
 
 func (u *User) Prepare() {
 	u.ID = 0
-	u.Name = html.EscapeString(strings.TrimSpace(u.Nickname))
+	u.Name = html.EscapeString(strings.TrimSpace(u.Name))
 	u.Email = html.EscapeString(strings.TrimSpace(u.Email))
 	u.SoftDelete = false
 	u.CreatedAt = time.Now()
@@ -140,7 +140,7 @@ func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
 	db = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).UpdateColumns(
 		map[string]interface{}{
 			"password":  u.Password,
-			"name":  u.Nickname,
+			"name":  u.Name,
 			"email":     u.Email,
 			"update_at": time.Now(),
 		},
@@ -159,7 +159,6 @@ func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
 func (u *User) DeleteAUser(db *gorm.DB, uid uint32) (int64, error) {
 
 	// because soft delete is only update to True
-
 	err := u.BeforeSave()
 	if err != nil {
 		log.Fatal(err)
@@ -171,21 +170,8 @@ func (u *User) DeleteAUser(db *gorm.DB, uid uint32) (int64, error) {
 		},
 	)
 	if db.Error != nil {
-		return &User{}, db.Error
-	}
-
-func (u *User) DeleteBUser(db *gorm.DB, uid uint32) (int64, error) {
-	// This is the display the updated user
-	err = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&u).Error
-	if err != nil {
-		return &UserStatus{}, err
-	}
-	return u, nil
-
-	db = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).Delete(&User{})
-
-	if db.Error != nil {
 		return 0, db.Error
 	}
-	return db.RowsAffected, nil
+
+	return 0, nil
 }

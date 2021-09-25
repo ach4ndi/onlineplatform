@@ -3,11 +3,10 @@ package models
 import (
 	"errors"
 	"html"
-	"log"
 	"strings"
 	"time"
 
-	"github.com/ach4ndi/onlineplatform/api/CourseCategory"
+	//"github.com/ach4ndi/onlineplatform/api/models"
 	"github.com/jinzhu/gorm"
 )
 
@@ -32,11 +31,10 @@ type Course struct {
 
 func (p *Course) Prepare() {
 	p.ID = 0
-	p.Name = html.EscapeString(strings.TrimSpace(p.Code))
+	p.Name = html.EscapeString(strings.TrimSpace(p.Name))
 	p.User = User{}
 	p.Description = html.EscapeString(strings.TrimSpace(p.Description))
 	p.Price = p.Price
-	p.OpeningImage = nil
 	p.IsFree = false
 	p.IsOnline = false
 	p.CreatedAt = time.Now()
@@ -63,7 +61,7 @@ func (p *Course) Validate() error {
 	return nil
 }
 
-func (p *Course) SaveCourse(db *gorm.DB) (*Product, error) {
+func (p *Course) SaveCourse(db *gorm.DB) (*Course, error) {
 	var err error
 	err = db.Debug().Model(&Course{}).Create(&p).Error
 	if err != nil {
@@ -96,7 +94,76 @@ func (p *Course) FindAllCourses(db *gorm.DB) (*[]Course, error) {
 	return &courses, nil
 }
 
-func (p *Course) FindPostByID(db *gorm.DB, pid uint64) (*Course, error) {
+func (p *Course) FindAllCoursesCheap(db *gorm.DB) (*[]Course, error) {
+	var err error
+	courses := []Course{}
+	err = db.Debug().Model(&Course{}).Order("price desc").Limit(100).Find(&courses).Error
+	if err != nil {
+		return &[]Course{}, err
+	}
+	if len(courses) > 0 {
+		for i, _ := range courses {
+			err := db.Debug().Model(&User{}).Where("id = ?", courses[i].UserID).Take(&courses[i].User).Error
+			if err != nil {
+				return &[]Course{}, err
+			}
+		}
+	}
+	return &courses, nil
+}
+
+func (p *Course) FindAllCoursesExpensive(db *gorm.DB) (*[]Course, error) {
+	var err error
+	courses := []Course{}
+	err = db.Debug().Model(&Course{}).Order("price asc").Limit(100).Find(&courses).Error
+	if err != nil {
+		return &[]Course{}, err
+	}
+	if len(courses) > 0 {
+		for i, _ := range courses {
+			err := db.Debug().Model(&User{}).Where("id = ?", courses[i].UserID).Take(&courses[i].User).Error
+			if err != nil {
+				return &[]Course{}, err
+			}
+		}
+	}
+	return &courses, nil
+}
+
+func (p *Course) FindAllCoursesFree(db *gorm.DB) (*[]Course, error) {
+	var err error
+	courses := []Course{}
+	err = db.Debug().Model(&Course{}).Where("price =? or isFree=?", 0, true).Limit(100).Find(&courses).Error
+	if err != nil {
+		return &[]Course{}, err
+	}
+	if len(courses) > 0 {
+		for i, _ := range courses {
+			err := db.Debug().Model(&User{}).Where("id = ?", courses[i].UserID).Take(&courses[i].User).Error
+			if err != nil {
+				return &[]Course{}, err
+			}
+		}
+	}
+	return &courses, nil
+}
+
+func (p *Course) SearchCourseName(db *gorm.DB, name string) (*Course, error) {
+	var err error
+	err = db.Debug().Model(&Course{}).Where("name = ?", name).Take(&p).Error
+	if err != nil {
+		return &Course{}, err
+	}
+	if p.ID != 0 {
+		err = db.Debug().Model(&User{}).Where("id = ?", p.UserID).Take(&p.User).Error
+		if err != nil {
+			return &Course{}, err
+		}
+	}
+	return p, nil
+}
+
+func (p *Course) FindCourseByID(db *gorm.DB, pid uint64) (*Course, error) {
 	var err error
 	err = db.Debug().Model(&Course{}).Where("id = ?", pid).Take(&p).Error
 	if err != nil {
@@ -111,10 +178,10 @@ func (p *Course) FindPostByID(db *gorm.DB, pid uint64) (*Course, error) {
 	return p, nil
 }
 
-func (p *Course) UpdateAPost(db *gorm.DB) (*Course, error) {
+func (p *Course) UpdateACourse(db *gorm.DB) (*Course, error) {
 
 	var err error
-	err = db.Debug().Model(&Course{}).Where("id = ?", p.ID).Updates(Course{Name: p.Name, Description: p.Description, Price: p.Price, IsFree: p.IsFree, Duration: p.Duration,OpeningImage: p.OpeningImage, IsOnline, p.IsOnline,UpdatedAt: time.Now()}).Error
+	err = db.Debug().Model(&Course{}).Where("id = ?", p.ID).Updates(Course{Name: p.Name, Description: p.Description, Price: p.Price, IsFree: p.IsFree, Duration: p.Duration, OpeningImage: p.OpeningImage, IsOnline: p.IsOnline,UpdatedAt: time.Now()}).Error
 	if err != nil {
 		return &Course{}, err
 	}
@@ -127,17 +194,17 @@ func (p *Course) UpdateAPost(db *gorm.DB) (*Course, error) {
 	return p, nil
 }
 
-func (p *Course) DeleteAPost(db *gorm.DB, pid uint64, uid uint32) (int64, error) {
+func (p *Course) DeleteACourse(db *gorm.DB, pid uint64, uid uint32) (*Course, error) {
 
 	var err error
-	err = db.Debug().Model(&Course{}).Where("id = ?", p.ID).Updates(Course{SoftDelete: p.SoftDelete, p.DeleteAt: time.Now()}).Error
-	if err != nil {
-		return &Product{}, err
+	err = db.Debug().Model(&Course{}).Where("id = ?", p.ID).Updates(Course{SoftDelete: true, DeleteAt: time.Now()}).Error
+	if err.Error != nil {
+		return &Course{}, db.Error
 	}
 	if p.ID != 0 {
 		err = db.Debug().Model(&User{}).Where("id = ?", p.UserID).Take(&p.User).Error
-		if err != nil {
-			return &Course{}, err
+		if err.Error != nil {
+			return &Course{}, db.Error
 		}
 	}
 	return p, nil

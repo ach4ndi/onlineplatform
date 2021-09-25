@@ -2,26 +2,23 @@ package models
 
 import (
 	"errors"
-	"html"
-	"log"
-	"strings"
 	"time"
 
-	"github.com/ach4ndi/onlineplatform/api/User"
-	"github.com/ach4ndi/onlineplatform/api/Course"
+	//"github.com/ach4ndi/onlineplatform/api/models"
+	"github.com/jinzhu/gorm"
 )
 
 type UserCourse struct {
-	ID            uint32       `gorm:"primary_key;auto_increment" json:"id"`
-	UserID  	  uint32       `sql:"type:int REFERENCES users(id)" json:"user_id"`
-	User    	  User   	   `json:"user"`
-	CourseID      uint32       `sql:"type:int REFERENCES courses(id)" json:"course_id"`
-	Course        Course       `json:"course"`
-	Buy           bool         `gorm:"default:false" json:"buy"`
-	SoftDelete    bool         `gorm:"default:false" json:"soft_delete"`
-	CreatedAt     time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt     time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	DeleteAt      time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"delete_at"`
+	ID                  uint32       `gorm:"primary_key;auto_increment" json:"id"`
+	UserID  	        uint32       `sql:"type:int REFERENCES users(id)" json:"user_id"`
+	User    	        User   	   `json:"user"`
+	CourseID            uint32       `sql:"type:int REFERENCES courses(id)" json:"course_id"`
+	Course              Course       `json:"course"`
+	Buy                 bool         `gorm:"default:false" json:"buy"`
+	SoftDelete          bool         `gorm:"default:false" json:"soft_delete"`
+	CreatedAt           time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt           time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
+	DeleteAt            time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"delete_at"`
 }
 
 func (u *UserCourse) Prepare() {
@@ -32,9 +29,7 @@ func (u *UserCourse) Prepare() {
 }
 
 func (u *UserCourse) Validate(action string) error {
-	if u.Buy == "" {
-		return errors.New("Required User buy yes or not")
-	}
+	return nil
 }
 
 func (u *UserCourse) SaveUserStatus(db *gorm.DB) (*UserCourse, error) {
@@ -53,7 +48,7 @@ func (u *UserCourse) FindAllUserCourse(db *gorm.DB) (*[]UserCourse, error) {
 	if err != nil {
 		return &[]UserCourse{}, err
 	}
-	return &UserCourse, err
+	return &usercourse, err
 }
 
 func (u *UserCourse) FindUserCourseByID(db *gorm.DB, uid uint32) (*UserCourse, error) {
@@ -69,12 +64,6 @@ func (u *UserCourse) FindUserCourseByID(db *gorm.DB, uid uint32) (*UserCourse, e
 }
 
 func (u *UserCourse) UpdateAUserCourse(db *gorm.DB, uid uint32) (*UserCourse, error) {
-
-	// To hash the password
-	err := u.BeforeSave()
-	if err != nil {
-		log.Fatal(err)
-	}
 	db = db.Debug().Model(&UserCourse{}).Where("id = ?", uid).Take(&UserCourse{}).UpdateColumns(
 		map[string]interface{}{
 			"Buy":  u.Buy,
@@ -85,7 +74,7 @@ func (u *UserCourse) UpdateAUserCourse(db *gorm.DB, uid uint32) (*UserCourse, er
 		return &UserCourse{}, db.Error
 	}
 	// This is the display the updated user
-	err = db.Debug().Model(&UserCourse{}).Where("id = ?", uid).Take(&u).Error
+	err := db.Debug().Model(&UserCourse{}).Where("id = ?", uid).Take(&u).Error
 	if err != nil {
 		return &UserCourse{}, err
 	}
@@ -93,13 +82,6 @@ func (u *UserCourse) UpdateAUserCourse(db *gorm.DB, uid uint32) (*UserCourse, er
 }
 
 func (u *UserCourse) DeleteAUserCourse(db *gorm.DB, uid uint32) (int64, error) {
-
-	// because soft delete is only update to True
-
-	err := u.BeforeSave()
-	if err != nil {
-		log.Fatal(err)
-	}
 	db = db.Debug().Model(&UserCourse{}).Where("id = ?", uid).Take(&UserCourse{}).UpdateColumns(
 		map[string]interface{}{
 			"soft_delete":  true,
@@ -107,20 +89,27 @@ func (u *UserCourse) DeleteAUserCourse(db *gorm.DB, uid uint32) (int64, error) {
 		},
 	)
 	if db.Error != nil {
-		return &UserCourse{}, db.Error
-	}
-	// This is the display the updated user
-	err = db.Debug().Model(&UserCourse{}).Where("id = ?", uid).Take(&u).Error
-	if err != nil {
-		return &UserCourse{}, err
-	}
-	return u, nil
-
-func (u *UserCourse) DeleteBUserStatus(db *gorm.DB, uid uint32) (int64, error) {
-	db = db.Debug().Model(&UserCourse{}).Where("id = ?", uid).Take(&UserCourse{}).Delete(&UserCourse{})
-
-	if db.Error != nil {
 		return 0, db.Error
 	}
-	return db.RowsAffected, nil
+	// This is the display the updated user
+	err := db.Debug().Model(&UserCourse{}).Where("id = ?", uid).Take(&u).Error
+	if err != nil {
+		return 0, err
+	}
+	return 0, nil
+}
+
+func (u *CourseCategory) PopularCourseCategory(db *gorm.DB) (*CourseCategory, error) {
+	var courseid int64
+
+	db = db.Debug().Model(&UserCourse{}).Select("courseid, count(*) as total").Group("courseid").Order("total desc").Limit(1).Take(&courseid)
+	
+	coursedata := Course{}
+	db = db.Debug().Model(&Course{}).Where("id = ?", courseid).Take(&coursedata)
+
+	course_category_id := coursedata.CourseCategoryID
+
+	db = db.Debug().Model(&CourseCategory{}).Where("id = ?", course_category_id).Take(&u)
+
+	return u, nil
 }

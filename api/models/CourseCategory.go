@@ -3,7 +3,6 @@ package models
 import (
 	"errors"
 	"html"
-	"log"
 	"strings"
 	"time"
 
@@ -21,7 +20,7 @@ type CourseCategory struct {
 
 func (u *CourseCategory) Prepare() {
 	u.ID = 0
-	u.Name = html.EscapeString(strings.TrimSpace(u.LevelName))
+	u.Name = html.EscapeString(strings.TrimSpace(u.Name))
 	u.SoftDelete = false
 	u.CreatedAt = time.Now()
 	u.UpdatedAt = time.Now()
@@ -31,9 +30,10 @@ func (u *CourseCategory) Validate(action string) error {
 	if u.Name == "" {
 		return errors.New("Required Caourse Category Name")
 	}
+	return nil
 }
 
-func (u *User) SaveCourseCategory(db *gorm.DB) (*CourseCategory, error) {
+func (u *CourseCategory) SaveCourseCategory(db *gorm.DB) (*CourseCategory, error) {
 	var err error
 	err = db.Debug().Create(&u).Error
 	if err != nil {
@@ -42,21 +42,21 @@ func (u *User) SaveCourseCategory(db *gorm.DB) (*CourseCategory, error) {
 	return u, nil
 }
 
-func (u *CourseCategory) FindAllCourseCategory(db *gorm.DB) (*[]User, error) {
+func (u *CourseCategory) FindAllCourseCategory(db *gorm.DB) (*[]CourseCategory, error) {
 	var err error
 	coursecategory := []CourseCategory{}
 	err = db.Debug().Model(&CourseCategory{}).Where("SoftDelete = ?", false).Limit(100).Find(&coursecategory).Error
 	if err != nil {
 		return &[]CourseCategory{}, err
 	}
-	return &CourseCategory, err
+	return &coursecategory, err
 }
 
-func (u *CourseCategory) FindUserStatusByID(db *gorm.DB, uid uint32) (*CourseCategory, error) {
+func (u *CourseCategory) FindCourseCategoryByID(db *gorm.DB, uid uint32) (*CourseCategory, error) {
 	var err error
 	err = db.Debug().Model(CourseCategory{}).Where("id = ? and SoftDelete ?", uid, false).Take(&u).Error
 	if err != nil {
-		return &UserStatus{}, err
+		return &CourseCategory{}, err
 	}
 	if gorm.IsRecordNotFoundError(err) {
 		return &CourseCategory{}, errors.New("Course Category NorFound")
@@ -66,14 +66,9 @@ func (u *CourseCategory) FindUserStatusByID(db *gorm.DB, uid uint32) (*CourseCat
 
 func (u *CourseCategory) UpdateACourseCategory(db *gorm.DB, uid uint32) (*CourseCategory, error) {
 
-	// To hash the password
-	err := u.BeforeSave()
-	if err != nil {
-		log.Fatal(err)
-	}
 	db = db.Debug().Model(&CourseCategory{}).Where("id = ?", uid).Take(&CourseCategory{}).UpdateColumns(
 		map[string]interface{}{
-			"cource_category_name":  u.Name
+			"cource_category_name": u.Name,
 			"update_at": time.Now(),
 		},
 	)
@@ -81,21 +76,15 @@ func (u *CourseCategory) UpdateACourseCategory(db *gorm.DB, uid uint32) (*Course
 		return &CourseCategory{}, db.Error
 	}
 	// This is the display the updated user
-	err = db.Debug().Model(&CourseCategory{}).Where("id = ?", uid).Take(&u).Error
+	err := db.Debug().Model(&CourseCategory{}).Where("id = ?", uid).Take(&u).Error
 	if err != nil {
 		return &CourseCategory{}, err
 	}
 	return u, nil
 }
 
-func (u *UserStatus) DeleteACourseCategory(db *gorm.DB, uid uint32) (int64, error) {
-
-	// because soft delete is only update to True
-
-	err := u.BeforeSave()
-	if err != nil {
-		log.Fatal(err)
-	}
+func (u *CourseCategory) DeleteACourseCategory(db *gorm.DB, uid uint32) (int64, error) {
+	// soft delete
 	db = db.Debug().Model(&CourseCategory{}).Where("id = ?", uid).Take(&CourseCategory{}).UpdateColumns(
 		map[string]interface{}{
 			"soft_delete":  true,
@@ -103,20 +92,12 @@ func (u *UserStatus) DeleteACourseCategory(db *gorm.DB, uid uint32) (int64, erro
 		},
 	)
 	if db.Error != nil {
-		return &UserStatus{}, db.Error
-	}
-	// This is the display the updated user
-	err = db.Debug().Model(&UserStatus{}).Where("id = ?", uid).Take(&u).Error
-	if err != nil {
-		return &UserStatus{}, err
-	}
-	return u, nil
-
-func (u *UserStatus) DeleteBCourseCategory(db *gorm.DB, uid uint32) (int64, error) {
-	db = db.Debug().Model(&CourseCategory{}).Where("id = ?", uid).Take(&CourseCategory{}).Delete(&CourseCategory{})
-
-	if db.Error != nil {
 		return 0, db.Error
 	}
-	return db.RowsAffected, nil
+	// This is the display the updated user
+	err := db.Debug().Model(&CourseCategory{}).Where("id = ?", uid).Take(&u).Error
+	if err != nil {
+		return 0, err
+	}
+	return 0, nil
 }

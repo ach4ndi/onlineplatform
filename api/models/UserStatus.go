@@ -3,7 +3,6 @@ package models
 import (
 	"errors"
 	"html"
-	"log"
 	"strings"
 	"time"
 
@@ -28,13 +27,14 @@ func (u *UserStatus) Prepare() {
 	u.UpdatedAt = time.Now()
 }
 
-func (u *User) Validate(action string) error {
+func (u *UserStatus) Validate(action string) error {
 	if u.LevelName == "" {
 		return errors.New("Required Level Name")
 	}
+	return nil
 }
 
-func (u *User) SaveUserStatus(db *gorm.DB) (*User, error) {
+func (u *UserStatus) SaveUserStatus(db *gorm.DB) (*UserStatus, error) {
 	var err error
 	err = db.Debug().Create(&u).Error
 	if err != nil {
@@ -43,14 +43,14 @@ func (u *User) SaveUserStatus(db *gorm.DB) (*User, error) {
 	return u, nil
 }
 
-func (u *UserStatus) FindAllStatus(db *gorm.DB) (*[]User, error) {
+func (u *UserStatus) FindAllStatus(db *gorm.DB) (*[]UserStatus, error) {
 	var err error
 	userstatus := []UserStatus{}
 	err = db.Debug().Model(&UserStatus{}).Where("SoftDelete = ?", false).Limit(100).Find(&userstatus).Error
 	if err != nil {
 		return &[]UserStatus{}, err
 	}
-	return &UserStatus, err
+	return &userstatus, err
 }
 
 func (u *UserStatus) FindUserStatusByID(db *gorm.DB, uid uint32) (*UserStatus, error) {
@@ -66,12 +66,6 @@ func (u *UserStatus) FindUserStatusByID(db *gorm.DB, uid uint32) (*UserStatus, e
 }
 
 func (u *UserStatus) UpdateAUserStatus(db *gorm.DB, uid uint32) (*UserStatus, error) {
-
-	// To hash the password
-	err := u.BeforeSave()
-	if err != nil {
-		log.Fatal(err)
-	}
 	db = db.Debug().Model(&UserStatus{}).Where("id = ?", uid).Take(&UserStatus{}).UpdateColumns(
 		map[string]interface{}{
 			"level_name":  u.LevelName,
@@ -83,21 +77,14 @@ func (u *UserStatus) UpdateAUserStatus(db *gorm.DB, uid uint32) (*UserStatus, er
 		return &UserStatus{}, db.Error
 	}
 	// This is the display the updated user
-	err = db.Debug().Model(&UserStatus{}).Where("id = ?", uid).Take(&u).Error
+	err := db.Debug().Model(&UserStatus{}).Where("id = ?", uid).Take(&u).Error
 	if err != nil {
 		return &UserStatus{}, err
 	}
 	return u, nil
 }
 
-func (u *UserStatus) DeleteAUserStatus(db *gorm.DB, uid uint32) (int64, error) {
-
-	// because soft delete is only update to True
-
-	err := u.BeforeSave()
-	if err != nil {
-		log.Fatal(err)
-	}
+func (u *UserStatus) DeleteAUserStatus(db *gorm.DB, uid uint32) (*UserStatus, error) {
 	db = db.Debug().Model(&UserStatus{}).Where("id = ?", uid).Take(&UserStatus{}).UpdateColumns(
 		map[string]interface{}{
 			"soft_delete":  true,
@@ -108,17 +95,9 @@ func (u *UserStatus) DeleteAUserStatus(db *gorm.DB, uid uint32) (int64, error) {
 		return &UserStatus{}, db.Error
 	}
 	// This is the display the updated user
-	err = db.Debug().Model(&UserStatus{}).Where("id = ?", uid).Take(&u).Error
+	err := db.Debug().Model(&UserStatus{}).Where("id = ?", uid).Take(&u).Error
 	if err != nil {
 		return &UserStatus{}, err
 	}
 	return u, nil
-
-func (u *UserStatus) DeleteBUserStatus(db *gorm.DB, uid uint32) (int64, error) {
-	db = db.Debug().Model(&UserStatus{}).Where("id = ?", uid).Take(&UserStatus{}).Delete(&UserStatus{})
-
-	if db.Error != nil {
-		return 0, db.Error
-	}
-	return db.RowsAffected, nil
 }

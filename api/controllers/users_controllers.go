@@ -1,9 +1,20 @@
 package controllers
 
-import "github.com/ach4ndi/onlineplatform/api/auth"
-import "github.com/ach4ndi/onlineplatform/api/models"
-import "github.com/ach4ndi/onlineplatform/api/responses"
-import "github.com/ach4ndi/onlineplatform/api/utils/formaterror"
+import (
+	"github.com/joho/godotenv"
+	"github.com/ach4ndi/onlineplatform/api/auth"
+	//"github.com/ach4ndi/onlineplatform/api/models"
+	"github.com/ach4ndi/onlineplatform/api/responses"
+	"github.com/ach4ndi/onlineplatform/api/utils/formaterror"
+	"errors"
+	"fmt"
+	"net/http"
+	"strconv"
+	//"github.com/google/uuid"
+	//"strings"
+	"os"
+	//"io"
+)
 
 func (server *Server) UserLogin(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
@@ -155,9 +166,18 @@ func (server *Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error getting env, %v", err)
+	} else {
+		fmt.Println("We are getting the env values")
+	}
+
+	limit_level = strconv.Atoi(os.Getenv("LIMITLV")) 
+
 	err = db.Debug().Model(User{}).Where("id = ?", tokenID).Take(&u).Error
 	if err != nil {
-		if err.UserStatus.LevelNum != 1{
+		if err.UserStatus.LevelNum != limit_level{
 			responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
 			return
 		}
@@ -246,7 +266,7 @@ func (server *Server) UpdateUserStatus(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	updatedUserStatus, err := userstatus.UpdateAUser(server.DB, uint32(uid))
+	updatedUserStatus, err := userstatus.UpdateAUserStatus(server.DB, uint32(uid))
 	if err != nil {
 		formattedError := formaterror.FormatError(err.Error())
 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
@@ -275,9 +295,18 @@ func (server *Server) DeleteUserStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error getting env, %v", err)
+	} else {
+		fmt.Println("We are getting the env values")
+	}
+
+	limit_level = strconv.Atoi(os.Getenv("LIMITLV")) 
+
 	err = db.Debug().Model(User{}).Where("id = ?", tokenID).Take(&u).Error
 	if err != nil {
-		if err.UserStatus.LevelNum != 1{
+		if err.UserStatus.LevelNum != limit_level{
 			responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
 			return
 		}
@@ -290,4 +319,57 @@ func (server *Server) DeleteUserStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Entity", fmt.Sprintf("%d", uid))
 	responses.JSON(w, http.StatusNoContent, "")
+}
+
+func (server *Server) CreateUserCategory(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+	}
+	usercategory := models.UserCategory{}
+	err = json.Unmarshal(body, &user)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	tokenID, err := auth.ExtractTokenID(r)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+		return
+	}
+
+	err = godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error getting env, %v", err)
+	} else {
+		fmt.Println("We are getting the env values")
+	}
+
+	limit_level = strconv.Atoi(os.Getenv("LIMITLV")) 
+
+	err = db.Debug().Model(User{}).Where("id = ?", tokenID).Take(&u).Error
+	if err != nil {
+		if err.UserStatus.LevelNum != limit_level{
+			responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+			return
+		}
+	}
+	
+	usercategory.Prepare()
+	err = usercategory.Validate("")
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+	usercategoryCreated, err := usercategory.SaveUserStatus(server.DB)
+
+	if err != nil {
+		formattedError := formaterror.FormatError(err.Error())
+
+		responses.ERROR(w, http.StatusInternalServerError, formattedError)
+		return
+	}
+	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, usercategoryCreated.ID))
+	responses.JSON(w, http.StatusCreated, usercategoryCreated)
 }
