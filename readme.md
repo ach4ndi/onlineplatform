@@ -50,7 +50,7 @@ SEED_LOAD=0
  notes:
  
  - if you want regenerate sampledata from seed data, just set SEED_LOAD to 1.
- - LIMITLV is confugiration number to check the user is admin or not, make sure add data user status with level_num following LIMITLV .
+ - LIMITLV is confugiration number to check the user is admin or not, make sure add data user status with level_num following LIMITLV. You should doing this for add user status admin. then you can register with that data you input on user status.
 	 ```
 	{
 		"level_name": "Admin",

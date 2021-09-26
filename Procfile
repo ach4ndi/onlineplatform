@@ -1,1 +1,1 @@
-web:onlineplatform
+web: ./bin/onlineplatform

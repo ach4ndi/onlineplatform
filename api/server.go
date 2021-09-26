@@ -49,5 +49,7 @@ func Run() {
 			fmt.Println("Found IMG_DIR for product IMAGE")
 		}
 	}
-	server.Run(os.Getenv("WEB_PORT"))
+
+	fmt.Println("Heroku Port : " + os.Getenv("PORT"))
+	server.Run(os.Getenv("PORT"))
 }
