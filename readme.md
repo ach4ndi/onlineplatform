@@ -71,9 +71,15 @@ go run main.go
 
  ## Running Heroku
  
+ Sadly i dont have hobby level on heroku, so the domain is not secured so it will problem with accessing it, also it the app will turn off when inactive every 30 minute, it will reset its port. Is impossible to set custom ssl and port on free account on heroku. so sorry, but is work.
+ 
+ I find heroku port from heroku logs --tail -a go-onlineplatform and right now set to 37242.
+ 
+ ```
  https://go-onlineplatform.heroku.com:42756
+ ```
 
- terkendala cert dan free account hanya aktif 1 jam lalu down..
+To disable ssl problem, you should add the url to delete domain security policies. on [chrome://net-internals/#hsts](chrome://net-internals/#hsts)
 
  jadi gak bisa ngetes diheroku
  
