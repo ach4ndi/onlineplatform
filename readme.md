@@ -83,7 +83,7 @@ To disable ssl problem, you should add the url to delete domain security policie
 
 For alternative, deploying this app on flashdrive.
 
-```http://ybxaecgqod.uswest02.fldrv.com:8000```
+```http://ybxaecgqod.uswest02.fldrv.com:80```
  
  you can access url and using on postman.
  
