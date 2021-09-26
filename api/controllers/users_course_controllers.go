@@ -2,14 +2,18 @@ package controllers
 
 import (
 	//"github.com/joho/godotenv"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+
 	"github.com/ach4ndi/onlineplatform/api/auth"
 	"github.com/ach4ndi/onlineplatform/api/models"
 	"github.com/ach4ndi/onlineplatform/api/responses"
 	"github.com/ach4ndi/onlineplatform/api/utils/formaterror"
-	"errors"
-	"fmt"
-	"net/http"
-	"strconv"
+	"github.com/gorilla/mux"
 	//"github.com/google/uuid"
 	//"strings"
 	//"os"
@@ -19,7 +23,7 @@ import (
 func (server *Server) GetUserCourses(w http.ResponseWriter, r *http.Request) {
 	usercourse := models.UserCourse{}
 
-	usercourses, err := UserCourse.FindAllUserCourse(server.DB)
+	usercourses, err := usercourse.FindAllUserCourse(server.DB)
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
@@ -41,7 +45,7 @@ func (server *Server) GetUserCourse(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
-	responses.JSON(w, http.StatusOK, userGotten)
+	responses.JSON(w, http.StatusOK, usercourseGotten)
 }
 
 func (server *Server) UpdateUserCourse(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +61,7 @@ func (server *Server) UpdateUserCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	usercourse := models.UserCourse{}
-	err = json.Unmarshal(body, &user)
+	err = json.Unmarshal(body, &usercourse)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
@@ -71,8 +75,8 @@ func (server *Server) UpdateUserCourse(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
 		return
 	}
-	user.Prepare()
-	err = user.Validate("update")
+	usercourse.Prepare()
+	err = usercourse.Validate("update")
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
@@ -121,7 +125,7 @@ func (server *Server) CreateUserCourse(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 	}
 	usercourse := models.UserCourse{}
-	err = json.Unmarshal(body, &user)
+	err = json.Unmarshal(body, &usercourse)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
@@ -148,7 +152,16 @@ func (server *Server) CreateUserCourse(w http.ResponseWriter, r *http.Request) {
 func (server *Server) PopularUserCourse(w http.ResponseWriter, r *http.Request) {
 	usercourse := models.UserCourse{}
 
-	popular, err := usercourse.PopularCourseCategory(server.DB)
+	course_id, err := usercourse.GetCourseID(server.DB)
+	fmt.Print(course_id)
+
+	course := models.Course{}
+	courseData, err := course.FindCourseByID(server.DB, uint64(course_id))
+
+	course_category_id := courseData.CourseCategoryID
+
+	course_category := models.CourseCategory{}
+	coursecatData, err := course_category.FindCourseCategoryByID(server.DB, course_category_id)
 
 	if err != nil {
 		formattedError := formaterror.FormatError(err.Error())
@@ -156,6 +169,6 @@ func (server *Server) PopularUserCourse(w http.ResponseWriter, r *http.Request) 
 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
 		return
 	}
-	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, usercourseCreated.ID))
-	responses.JSON(w, http.StatusCreated, popular)
+	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, coursecatData.ID))
+	responses.JSON(w, http.StatusCreated, coursecatData)
 }

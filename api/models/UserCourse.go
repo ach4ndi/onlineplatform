@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	//"github.com/ach4ndi/onlineplatform/api/models"
@@ -9,16 +10,16 @@ import (
 )
 
 type UserCourse struct {
-	ID                  uint32       `gorm:"primary_key;auto_increment" json:"id"`
-	UserID  	        uint32       `sql:"type:int REFERENCES users(id)" json:"user_id"`
-	User    	        User   	   `json:"user"`
-	CourseID            uint32       `sql:"type:int REFERENCES courses(id)" json:"course_id"`
-	Course              Course       `json:"course"`
-	Buy                 bool         `gorm:"default:false" json:"buy"`
-	SoftDelete          bool         `gorm:"default:false" json:"soft_delete"`
-	CreatedAt           time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt           time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	DeleteAt            time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"delete_at"`
+	ID         uint32    `gorm:"primary_key;auto_increment" json:"id"`
+	UserID     uint32    `sql:"type:int REFERENCES users(id)" json:"user_id"`
+	User       User      `json:"user"`
+	CourseID   uint32    `sql:"type:int REFERENCES courses(id)" json:"course_id"`
+	Course     Course    `json:"course"`
+	Buy        bool      `gorm:"default:false" json:"buy"`
+	SoftDelete bool      `gorm:"default:false" json:"soft_delete"`
+	CreatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
+	DeleteAt   time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"delete_at"`
 }
 
 func (u *UserCourse) Prepare() {
@@ -44,7 +45,7 @@ func (u *UserCourse) SaveUserStatus(db *gorm.DB) (*UserCourse, error) {
 func (u *UserCourse) FindAllUserCourse(db *gorm.DB) (*[]UserCourse, error) {
 	var err error
 	usercourse := []UserCourse{}
-	err = db.Debug().Model(&UserCourse{}).Where("SoftDelete = ?", false).Limit(100).Find(&usercourse).Error
+	err = db.Debug().Model(&UserCourse{}).Where("soft_delete = ?", false).Limit(100).Find(&usercourse).Error
 	if err != nil {
 		return &[]UserCourse{}, err
 	}
@@ -53,7 +54,7 @@ func (u *UserCourse) FindAllUserCourse(db *gorm.DB) (*[]UserCourse, error) {
 
 func (u *UserCourse) FindUserCourseByID(db *gorm.DB, uid uint32) (*UserCourse, error) {
 	var err error
-	err = db.Debug().Model(UserCourse{}).Where("id = ? and SoftDelete ?", uid, false).Take(&u).Error
+	err = db.Debug().Model(UserCourse{}).Where("id = ? and soft_delete = ?", uid, false).Take(&u).Error
 	if err != nil {
 		return &UserCourse{}, err
 	}
@@ -66,8 +67,8 @@ func (u *UserCourse) FindUserCourseByID(db *gorm.DB, uid uint32) (*UserCourse, e
 func (u *UserCourse) UpdateAUserCourse(db *gorm.DB, uid uint32) (*UserCourse, error) {
 	db = db.Debug().Model(&UserCourse{}).Where("id = ?", uid).Take(&UserCourse{}).UpdateColumns(
 		map[string]interface{}{
-			"Buy":  u.Buy,
-			"update_at": time.Now(),
+			"Buy":        u.Buy,
+			"updated_at": time.Now(),
 		},
 	)
 	if db.Error != nil {
@@ -84,8 +85,8 @@ func (u *UserCourse) UpdateAUserCourse(db *gorm.DB, uid uint32) (*UserCourse, er
 func (u *UserCourse) DeleteAUserCourse(db *gorm.DB, uid uint32) (int64, error) {
 	db = db.Debug().Model(&UserCourse{}).Where("id = ?", uid).Take(&UserCourse{}).UpdateColumns(
 		map[string]interface{}{
-			"soft_delete":  true,
-			"delete_at": time.Now(),
+			"soft_delete": true,
+			"delete_at":   time.Now(),
 		},
 	)
 	if db.Error != nil {
@@ -99,17 +100,19 @@ func (u *UserCourse) DeleteAUserCourse(db *gorm.DB, uid uint32) (int64, error) {
 	return 0, nil
 }
 
-func (u *CourseCategory) PopularCourseCategory(db *gorm.DB) (*CourseCategory, error) {
+func (u *UserCourse) GetCourseID(db *gorm.DB) (int64, error) {
 	var courseid int64
 
-	db = db.Debug().Model(&UserCourse{}).Select("courseid, count(*) as total").Group("courseid").Order("total desc").Limit(1).Take(&courseid)
-	
-	coursedata := Course{}
-	db = db.Debug().Model(&Course{}).Where("id = ?", courseid).Take(&coursedata)
+	out := UserCourse{}
+	result := db.Debug().Model(&UserCourse{}).Where("soft_delete = ?", false).Group("course_id").Order("count(course_id) desc").First(&out)
+	courseid = int64(out.CourseID)
+	fmt.Print(result)
+	//coursedata := models.Course{}
+	//db = db.Debug().Model(&Course{}).Where("id = ?", courseid).Take(&coursedata)
 
-	course_category_id := coursedata.CourseCategoryID
+	//course_category_id := coursedata.CourseCategoryID
 
-	db = db.Debug().Model(&CourseCategory{}).Where("id = ?", course_category_id).Take(&u)
+	//db = db.Debug().Model(&CourseCategory{}).Where("id = ?", course_category_id).Take(&u)
 
-	return u, nil
+	return courseid, nil
 }

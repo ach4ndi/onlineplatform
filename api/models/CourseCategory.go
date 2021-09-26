@@ -10,12 +10,12 @@ import (
 )
 
 type CourseCategory struct {
-	ID          uint32    `gorm:"primary_key;auto_increment" json:"id"`
-	Name   		string    `gorm:"size:255;not null;unique" json:"cource_category_name"`
-	SoftDelete  bool      `gorm:"default:false" json:"soft_delete"`
-	CreatedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	DeleteAt    time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"delete_at"`
+	ID         uint32    `gorm:"primary_key;auto_increment" json:"id"`
+	Name       string    `gorm:"size:255;not null;unique" json:"name"`
+	SoftDelete bool      `gorm:"default:false" json:"soft_delete"`
+	CreatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
+	DeleteAt   time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"delete_at"`
 }
 
 func (u *CourseCategory) Prepare() {
@@ -28,14 +28,14 @@ func (u *CourseCategory) Prepare() {
 
 func (u *CourseCategory) Validate(action string) error {
 	if u.Name == "" {
-		return errors.New("Required Caourse Category Name")
+		return errors.New("Required Course Category Name")
 	}
 	return nil
 }
 
 func (u *CourseCategory) SaveCourseCategory(db *gorm.DB) (*CourseCategory, error) {
 	var err error
-	err = db.Debug().Create(&u).Error
+	err = db.Debug().Model(&CourseCategory{}).Create(&u).Error
 	if err != nil {
 		return &CourseCategory{}, err
 	}
@@ -45,7 +45,7 @@ func (u *CourseCategory) SaveCourseCategory(db *gorm.DB) (*CourseCategory, error
 func (u *CourseCategory) FindAllCourseCategory(db *gorm.DB) (*[]CourseCategory, error) {
 	var err error
 	coursecategory := []CourseCategory{}
-	err = db.Debug().Model(&CourseCategory{}).Where("SoftDelete = ?", false).Limit(100).Find(&coursecategory).Error
+	err = db.Debug().Model(&CourseCategory{}).Where("soft_delete = ?", false).Limit(100).Find(&coursecategory).Error
 	if err != nil {
 		return &[]CourseCategory{}, err
 	}
@@ -54,7 +54,7 @@ func (u *CourseCategory) FindAllCourseCategory(db *gorm.DB) (*[]CourseCategory, 
 
 func (u *CourseCategory) FindCourseCategoryByID(db *gorm.DB, uid uint32) (*CourseCategory, error) {
 	var err error
-	err = db.Debug().Model(CourseCategory{}).Where("id = ? and SoftDelete ?", uid, false).Take(&u).Error
+	err = db.Debug().Model(CourseCategory{}).Where("id = ? and soft_delete = ?", uid, false).Take(&u).Error
 	if err != nil {
 		return &CourseCategory{}, err
 	}
@@ -65,11 +65,10 @@ func (u *CourseCategory) FindCourseCategoryByID(db *gorm.DB, uid uint32) (*Cours
 }
 
 func (u *CourseCategory) UpdateACourseCategory(db *gorm.DB, uid uint32) (*CourseCategory, error) {
-
 	db = db.Debug().Model(&CourseCategory{}).Where("id = ?", uid).Take(&CourseCategory{}).UpdateColumns(
 		map[string]interface{}{
-			"cource_category_name": u.Name,
-			"update_at": time.Now(),
+			"name":       u.Name,
+			"updated_at": time.Now(),
 		},
 	)
 	if db.Error != nil {
@@ -87,8 +86,8 @@ func (u *CourseCategory) DeleteACourseCategory(db *gorm.DB, uid uint32) (int64, 
 	// soft delete
 	db = db.Debug().Model(&CourseCategory{}).Where("id = ?", uid).Take(&CourseCategory{}).UpdateColumns(
 		map[string]interface{}{
-			"soft_delete":  true,
-			"delete_at": time.Now(),
+			"soft_delete": true,
+			"delete_at":   time.Now(),
 		},
 	)
 	if db.Error != nil {

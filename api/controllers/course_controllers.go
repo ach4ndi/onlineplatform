@@ -1,19 +1,27 @@
 package controllers
 
 import (
-	"github.com/joho/godotenv"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/ach4ndi/onlineplatform/api/auth"
 	"github.com/ach4ndi/onlineplatform/api/models"
 	"github.com/ach4ndi/onlineplatform/api/responses"
 	"github.com/ach4ndi/onlineplatform/api/utils/formaterror"
-	"errors"
-	"fmt"
-	"net/http"
-	"strconv"
+	"github.com/cloudinary/cloudinary-go"
+	"github.com/cloudinary/cloudinary-go/api/uploader"
 	"github.com/google/uuid"
-	"strings"
-	"os"
-	"io"
+	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
 
 func (server *Server) GetCourses(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +32,7 @@ func (server *Server) GetCourses(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
-	responses.JSON(w, http.StatusOK, users)
+	responses.JSON(w, http.StatusOK, courses)
 }
 
 func (server *Server) GetCoursesLow(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +43,7 @@ func (server *Server) GetCoursesLow(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
-	responses.JSON(w, http.StatusOK, users)
+	responses.JSON(w, http.StatusOK, courses)
 }
 
 func (server *Server) GetCoursesHigh(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +54,7 @@ func (server *Server) GetCoursesHigh(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
-	responses.JSON(w, http.StatusOK, users)
+	responses.JSON(w, http.StatusOK, courses)
 }
 
 func (server *Server) GetCoursesFree(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +76,7 @@ func (server *Server) GetCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	course := models.Course{}
-	courseGoten, err := course.FindCourseByID(server.DB, uint32(uid))
+	courseGoten, err := course.FindCourseByID(server.DB, uint64(uid))
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
@@ -84,26 +92,28 @@ func (server *Server) UpdateCourse(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = godotenv.Load()
-	tokenID = uid
+	tokenID := uid
 	if err != nil {
 		log.Fatalf("Error getting env, %v", err)
 	} else {
 		fmt.Println("We are getting the env values")
 	}
 
-	limit_level = strconv.Atoi(os.Getenv("LIMITLV")) 
+	limit_level, err := strconv.Atoi(os.Getenv("LIMITLV"))
 
-	err = db.Debug().Model(User{}).Where("id = ?", tokenID).Take(&u).Error
-	if err != nil {
-		if err.UserStatus.LevelNum != limit_level{
-			responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-			return
-		}
+	user := models.User{}
+	userGotten, err := user.FindUserByID(server.DB, tokenID)
+
+	userst := models.UserStatus{}
+	userstatusGotten, err := userst.FindUserStatusByID(server.DB, userGotten.UserStatusID)
+
+	if userstatusGotten.LevelNum != uint32(limit_level) {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
 	}
 
-
 	// <num> limit filesize <num> in MB
-	limit_size, err := strconv.ParseInt(os.Getenv("IMG_LIMIT"),10,32)
+	limit_size, err := strconv.ParseInt(os.Getenv("IMG_LIMIT"), 10, 32)
 
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
@@ -113,12 +123,15 @@ func (server *Server) UpdateCourse(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(limit_size)
 	course := models.Course{}
 
-	course.CourseCategoryID = r.Form.Get("course_category_id")
-	course.UserID = r.Form.Get("user_id")
+	c_coursecategoryid, err := strconv.ParseInt(r.Form.Get("course_category_id"), 10, 32)
+	//c_userid, err := strconv.ParseInt(r.Form.Get("user_id"), 10, 32)
+
+	course.CourseCategoryID = uint32(c_coursecategoryid)
+	course.UserID = uint32(tokenID)
 	course.Name = r.Form.Get("course_name")
 	course.Description = r.Form.Get("course_desc")
 
-	res, err := strconv.ParseInt(r.Form.Get("price"),10,32)
+	res, err := strconv.ParseInt(r.Form.Get("price"), 10, 32)
 
 	if err != nil {
 		fmt.Printf(r.Form.Get("default_price"))
@@ -126,20 +139,36 @@ func (server *Server) UpdateCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	c_duration, err := strconv.ParseInt(r.Form.Get("duration"), 10, 32)
+	c_isfree, err := strconv.ParseInt(r.Form.Get("is_free"), 10, 32)
+	c_isonline, err := strconv.ParseInt(r.Form.Get("is_online"), 10, 32)
+	b_isfree := false
+	b_isonline := false
+
+	if c_isfree == 1 {
+		b_isfree = true
+	}
+
+	if c_isonline == 1 {
+		b_isonline = true
+	}
+
 	course.Price = uint32(res)
-	course.Duration = r.Form.Get("duration")
-	course.IsFree = r.Form.Get("is_free")
-	course.IsOnline = r.Form.Get("is_online")
+	course.Duration = uint32(c_duration)
+	course.IsFree = b_isfree
+	course.IsOnline = b_isonline
 
-	file, handler, err := r.FormFile("OpeningImage")
-	imageName := ""
+	if r.Form.Get("opening_image_update") == "1" {
+		file, handler, err := r.FormFile("opening_image")
+		fmt.Printf("Uploaded File: %+v\n", handler.Filename)
+		imageName := ""
 
-	switch err {
+		switch err {
 		case nil:
-			if os.Getenv("CLOUDINARY_APIKEY") == ""{
+			if os.Getenv("CLOUDINARY_APIKEY") == "" {
 				// if empty will used local
-				imageName = "product_"+strings.Replace(uuid.New().String(), "-", "", -1) + ".png"
-			
+				imageName = "product_" + strings.Replace(uuid.New().String(), "-", "", -1) + ".png"
+
 				f, err := os.OpenFile(os.Getenv("IMG_DIR")+"/images/products/"+imageName, os.O_WRONLY|os.O_CREATE, 0666)
 				if err != nil {
 					fmt.Println(err)
@@ -148,25 +177,31 @@ func (server *Server) UpdateCourse(w http.ResponseWriter, r *http.Request) {
 
 				io.Copy(f, file)
 			}
-			if os.Getenv("CLOUDINARY_APIKEY") != ""{
+			if os.Getenv("CLOUDINARY_APIKEY") != "" {
+				var ctx = context.Background()
 				cld, _ := cloudinary.NewFromParams(os.Getenv("CLOUDINARY_CLOUDNAME"), os.Getenv("CLOUDINARY_APIKEY"), os.Getenv("CLOUDINARY_APISecret"))
-
-				resp, err := cld.Upload.Upload(file, imageName, uploader.UploadParams{})
-
+				resp, err := cld.Upload.Upload(ctx, file, uploader.UploadParams{})
+				if err != nil {
+					fmt.Println(err)
+				}
 				imageName = resp.SecureURL
+				defer file.Close()
 			}
 		case http.ErrMissingFile:
+			defer file.Close()
 			fmt.Printf("no file")
 		default:
+			defer file.Close()
 			fmt.Printf("errs")
-	}
-	
-	if imageName == ""{
-		imageName = nil
-	}
+		}
 
-	course.OpeningImage = imageName
-	defer file.Close()
+		if imageName == "" {
+			imageName = ""
+		}
+		course.OpeningImage = imageName
+	} else {
+		fmt.Println("user decide not update or anything")
+	}
 
 	course.Prepare()
 	err = course.Validate()
@@ -174,12 +209,14 @@ func (server *Server) UpdateCourse(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	
+
 	if uid != course.UserID {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
 		return
 	}
-	courseCreated, err := course.SaveCourse(server.DB)
+	vars := mux.Vars(r)
+	pid, err := strconv.ParseUint(vars["id"], 10, 64)
+	courseCreated, err := course.UpdateACourse(server.DB, uint64(pid))
 	if err != nil {
 		formattedError := formaterror.FormatError(err.Error())
 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
@@ -192,7 +229,7 @@ func (server *Server) UpdateCourse(w http.ResponseWriter, r *http.Request) {
 
 func (server *Server) DeleteCourse(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	
+
 	course := models.Course{}
 
 	uid, err := strconv.ParseUint(vars["id"], 10, 32)
@@ -205,10 +242,6 @@ func (server *Server) DeleteCourse(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
 		return
 	}
-	if tokenID != 0 && tokenID != uint32(uid) {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-		return
-	}
 
 	err = godotenv.Load()
 	if err != nil {
@@ -217,17 +250,20 @@ func (server *Server) DeleteCourse(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("We are getting the env values")
 	}
 
-	limit_level = strconv.Atoi(os.Getenv("LIMITLV")) 
+	limit_level, err := strconv.Atoi(os.Getenv("LIMITLV"))
 
-	err = db.Debug().Model(User{}).Where("id = ?", tokenID).Take(&u).Error
-	if err != nil {
-		if err.UserStatus.LevelNum != limit_level{
-			responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-			return
-		}
+	user := models.User{}
+	userGotten, err := user.FindUserByID(server.DB, tokenID)
+
+	userst := models.UserStatus{}
+	userstatusGotten, err := userst.FindUserStatusByID(server.DB, userGotten.UserStatusID)
+
+	if userstatusGotten.LevelNum != uint32(limit_level) {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
 	}
 
-	_, err = course.DeleteAPost(server.DB, uint32(uid))
+	_, err = course.DeleteACourse(server.DB, uint32(uid))
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
@@ -244,23 +280,26 @@ func (server *Server) CreateCourse(w http.ResponseWriter, r *http.Request) {
 	}
 	err = godotenv.Load()
 	// <num> limit filesize <num> in MB
-	limit_size, err := strconv.ParseInt(os.Getenv("IMG_LIMIT"),10,32)
+	limit_size, err := strconv.ParseInt(os.Getenv("IMG_LIMIT"), 10, 32)
 
-	tokenID = uid
+	tokenID := uid
 	if err != nil {
 		log.Fatalf("Error getting env, %v", err)
 	} else {
 		fmt.Println("We are getting the env values")
 	}
 
-	limit_level = strconv.Atoi(os.Getenv("LIMITLV")) 
+	limit_level, err := strconv.Atoi(os.Getenv("LIMITLV"))
 
-	err = db.Debug().Model(User{}).Where("id = ?", tokenID).Take(&u).Error
-	if err != nil {
-		if err.UserStatus.LevelNum != limit_level{
-			responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-			return
-		}
+	user := models.User{}
+	userGotten, err := user.FindUserByID(server.DB, tokenID)
+
+	userst := models.UserStatus{}
+	userstatusGotten, err := userst.FindUserStatusByID(server.DB, userGotten.UserStatusID)
+
+	if userstatusGotten.LevelNum != uint32(limit_level) {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
 	}
 
 	if err != nil {
@@ -271,12 +310,15 @@ func (server *Server) CreateCourse(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(limit_size)
 	course := models.Course{}
 
-	course.CourseCategoryID = r.Form.Get("course_category_id")
-	course.UserID = r.Form.Get("user_id")
+	c_coursecategoryid, err := strconv.ParseInt(r.Form.Get("course_category_id"), 10, 32)
+	//c_userid, err := strconv.ParseInt(r.Form.Get("user_id"), 10, 32)
+
+	course.CourseCategoryID = uint32(c_coursecategoryid)
+	course.UserID = uint32(tokenID)
 	course.Name = r.Form.Get("course_name")
 	course.Description = r.Form.Get("course_desc")
 
-	res, err := strconv.ParseInt(r.Form.Get("price"),10,32)
+	res, err := strconv.ParseInt(r.Form.Get("price"), 10, 32)
 
 	if err != nil {
 		fmt.Printf(r.Form.Get("default_price"))
@@ -284,46 +326,68 @@ func (server *Server) CreateCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	course.Price = uint32(res)
-	course.Duration = r.Form.Get("duration")
-	course.IsFree = r.Form.Get("is_free")
-	course.IsOnline = r.Form.Get("is_online")
+	c_duration, err := strconv.ParseInt(r.Form.Get("duration"), 10, 32)
+	c_isfree, err := strconv.ParseInt(r.Form.Get("is_free"), 10, 32)
+	c_isonline, err := strconv.ParseInt(r.Form.Get("is_online"), 10, 32)
+	b_isfree := false
+	b_isonline := false
 
-	file, handler, err := r.FormFile("OpeningImage")
+	if c_isfree == 1 {
+		b_isfree = true
+	}
+
+	if c_isonline == 1 {
+		b_isonline = true
+	}
+
+	course.Price = uint32(res)
+	course.Duration = uint32(c_duration)
+	course.IsFree = b_isfree
+	course.IsOnline = b_isonline
+
+	file, handler, err := r.FormFile("opening_image")
+	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
 	imageName := ""
 
 	switch err {
-		case nil:
-			if os.Getenv("CLOUDINARY_APIKEY") == ""{
-				// if empty will used local
-				imageName = "product_"+strings.Replace(uuid.New().String(), "-", "", -1) + ".png"
-			
-				f, err := os.OpenFile(os.Getenv("IMG_DIR")+"/images/products/"+imageName, os.O_WRONLY|os.O_CREATE, 0666)
-				if err != nil {
-					fmt.Println(err)
-				}
-				defer f.Close()
+	case nil:
+		if os.Getenv("CLOUDINARY_APIKEY") == "" {
+			// if empty will used local
+			imageName = "product_" + strings.Replace(uuid.New().String(), "-", "", -1) + ".png"
 
-				io.Copy(f, file)
+			f, err := os.OpenFile(os.Getenv("IMG_DIR")+"/images/products/"+imageName, os.O_WRONLY|os.O_CREATE, 0666)
+			if err != nil {
+				fmt.Println(err)
 			}
-			if os.Getenv("CLOUDINARY_APIKEY") != ""{
-				cld, _ := cloudinary.NewFromParams(os.Getenv("CLOUDINARY_CLOUDNAME"), os.Getenv("CLOUDINARY_APIKEY"), os.Getenv("CLOUDINARY_APISecret"))
-				resp, err := cld.Upload.Upload(file, imageName, uploader.UploadParams{})
+			defer f.Close()
 
-				imageName = resp.SecureURL
+			io.Copy(f, file)
+		}
+		if os.Getenv("CLOUDINARY_APIKEY") != "" {
+			var ctx = context.Background()
+			cld, _ := cloudinary.NewFromParams(os.Getenv("CLOUDINARY_CLOUDNAME"), os.Getenv("CLOUDINARY_APIKEY"), os.Getenv("CLOUDINARY_APISecret"))
+			resp, err := cld.Upload.Upload(ctx, file, uploader.UploadParams{})
+
+			if err != nil {
+				fmt.Println(err)
 			}
-		case http.ErrMissingFile:
-			fmt.Printf("no file")
-		default:
-			fmt.Printf("errs")
+
+			imageName = resp.SecureURL
+			defer file.Close()
+		}
+	case http.ErrMissingFile:
+		defer file.Close()
+		fmt.Printf("no file")
+	default:
+		defer file.Close()
+		fmt.Printf("errs")
 	}
-	
-	if imageName == ""{
-		imageName = nil
+
+	if imageName == "" {
+		imageName = ""
 	}
 
 	course.OpeningImage = imageName
-	defer file.Close()
 
 	course.Prepare()
 	err = course.Validate()
@@ -331,11 +395,12 @@ func (server *Server) CreateCourse(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	
+
 	if uid != course.UserID {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
 		return
 	}
+
 	courseCreated, err := course.SaveCourse(server.DB)
 	if err != nil {
 		formattedError := formaterror.FormatError(err.Error())
@@ -346,10 +411,24 @@ func (server *Server) CreateCourse(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusCreated, courseCreated)
 }
 
-func (server *Server) SearchCourse(w http.ResponseWriter, r *http.Request) {
-	course := models.Course{}
+type SearchField struct {
+	Search string `json:"search"`
+}
 
-	courses, err := course.SearchCourseName(server.DB)
+func (server *Server) SearchCourse(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+
+	data := SearchField{}
+	var result = json.Unmarshal(body, &data)
+
+	if result != nil {
+		fmt.Print("oK")
+	}
+
+	defer r.Body.Close()
+	fmt.Print(data.Search)
+	course := models.Course{}
+	courses, err := course.SearchCourseName(server.DB, data.Search)
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return

@@ -3,13 +3,14 @@ package controllers
 import (
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 
-	_ "github.com/jinzhu/gorm/dialects/mysql"    //mysql database driver
-	_ "github.com/jinzhu/gorm/dialects/sqlite"   // sqlite database driver
 	"github.com/ach4ndi/onlineplatform/api/models"
+	_ "github.com/jinzhu/gorm/dialects/mysql"  //mysql database driver
+	_ "github.com/jinzhu/gorm/dialects/sqlite" // sqlite database driver
 )
 
 type Server struct {
@@ -48,4 +49,8 @@ func (server *Server) Initialize(Dbdriver, DbUser, DbPassword, DbPort, DbHost, D
 	server.Router = mux.NewRouter()
 
 	server.initializeRoutes()
+}
+
+func (server *Server) Run(addr string) {
+	log.Fatal(http.ListenAndServe(addr, server.Router))
 }

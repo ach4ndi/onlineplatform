@@ -10,13 +10,13 @@ import (
 )
 
 type UserStatus struct {
-	ID          uint32    `gorm:"primary_key;auto_increment" json:"id"`
-	LevelName   string    `gorm:"size:255;not null;unique" json:"level_name"`
-	LevelNum    uint32	  `gorm:"default:0" json:"level_num"`
-	SoftDelete  bool      `gorm:"default:false" json:"soft_delete"`
-	CreatedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	DeleteAt    time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"delete_at"`
+	ID         uint32    `gorm:"primary_key;auto_increment" json:"id"`
+	LevelName  string    `gorm:"size:255;not null;unique" json:"level_name"`
+	LevelNum   uint32    `gorm:"default:0" json:"level_num"`
+	SoftDelete bool      `gorm:"default:false" json:"soft_delete"`
+	CreatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
+	DeleteAt   time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"delete_at"`
 }
 
 func (u *UserStatus) Prepare() {
@@ -43,10 +43,10 @@ func (u *UserStatus) SaveUserStatus(db *gorm.DB) (*UserStatus, error) {
 	return u, nil
 }
 
-func (u *UserStatus) FindAllStatus(db *gorm.DB) (*[]UserStatus, error) {
+func (u *UserStatus) FindAllUserStatus(db *gorm.DB) (*[]UserStatus, error) {
 	var err error
 	userstatus := []UserStatus{}
-	err = db.Debug().Model(&UserStatus{}).Where("SoftDelete = ?", false).Limit(100).Find(&userstatus).Error
+	err = db.Debug().Model(&UserStatus{}).Where("soft_delete = ?", false).Limit(100).Find(&userstatus).Error
 	if err != nil {
 		return &[]UserStatus{}, err
 	}
@@ -55,7 +55,7 @@ func (u *UserStatus) FindAllStatus(db *gorm.DB) (*[]UserStatus, error) {
 
 func (u *UserStatus) FindUserStatusByID(db *gorm.DB, uid uint32) (*UserStatus, error) {
 	var err error
-	err = db.Debug().Model(UserStatus{}).Where("id = ? and SoftDelete ?", uid, false).Take(&u).Error
+	err = db.Debug().Model(UserStatus{}).Where("id = ? and soft_delete = ?", uid, 0).Take(&u).Error
 	if err != nil {
 		return &UserStatus{}, err
 	}
@@ -68,9 +68,9 @@ func (u *UserStatus) FindUserStatusByID(db *gorm.DB, uid uint32) (*UserStatus, e
 func (u *UserStatus) UpdateAUserStatus(db *gorm.DB, uid uint32) (*UserStatus, error) {
 	db = db.Debug().Model(&UserStatus{}).Where("id = ?", uid).Take(&UserStatus{}).UpdateColumns(
 		map[string]interface{}{
-			"level_name":  u.LevelName,
-			"level_num": u.LevelNum,
-			"update_at": time.Now(),
+			"level_name": u.LevelName,
+			"level_num":  u.LevelNum,
+			"updated_at": time.Now(),
 		},
 	)
 	if db.Error != nil {
@@ -87,8 +87,8 @@ func (u *UserStatus) UpdateAUserStatus(db *gorm.DB, uid uint32) (*UserStatus, er
 func (u *UserStatus) DeleteAUserStatus(db *gorm.DB, uid uint32) (*UserStatus, error) {
 	db = db.Debug().Model(&UserStatus{}).Where("id = ?", uid).Take(&UserStatus{}).UpdateColumns(
 		map[string]interface{}{
-			"soft_delete":  true,
-			"delete_at": time.Now(),
+			"soft_delete": true,
+			"delete_at":   time.Now(),
 		},
 	)
 	if db.Error != nil {

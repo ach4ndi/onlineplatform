@@ -1,21 +1,30 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
+
+	"github.com/ach4ndi/onlineplatform/api/models"
 	"github.com/ach4ndi/onlineplatform/api/responses"
-	//"github.com/ach4ndi/onlineplatform/api/models"
 )
 
 func (server *Server) Stat(w http.ResponseWriter, r *http.Request) {
-	user, err := db.Debug().Model(&User{}).Count((&user_count))
-	course, err := db.Debug().Model(&Course{}).Count((&course_count))
-	coursefree, err := db.Debug().Model(&Course{}).Where("isFree = ? or Price = ?", true, 0).Count((&course_free_count))
+	user := models.User{}
+	course := models.Course{}
+
+	user_count, err := user.GetUserCount(server.DB)
+	course_count, err := course.GetCourseCount(server.DB)
+	coursefree_count, err := course.GetFreeCourseCount(server.DB)
+
+	if err != nil {
+		log.Print("sad .env file found")
+	}
 
 	data := map[string]interface{}{
-		"User": user_count,
-		"Course": course_count,
-		"FreeCourse": course_free_count,
-	  }
+		"User":       user_count,
+		"Course":     course_count,
+		"FreeCourse": coursefree_count,
+	}
 
 	responses.JSON(w, http.StatusOK, data)
 

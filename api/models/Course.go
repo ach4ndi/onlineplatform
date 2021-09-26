@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"html"
 	"strings"
 	"time"
@@ -11,22 +12,22 @@ import (
 )
 
 type Course struct {
-	ID                 uint32       	`gorm:"primary_key;auto_increment" json:"id"`
-	CourseCategoryID   uint32       	`sql:"type:int REFERENCES coursecategories(id)"json:"course_category_id"`
-	CourseCategory     CourseCategory   `json:"course_category"`
-	User          	   User      		`json:"user"`
-	UserID        	   uint32    		`sql:"type:int REFERENCES users(id)" json:"user_id"`
-	Name               string       	`gorm:"size:255;not null" json:"course_name"`
-	Description		   string       	`gorm:"size:255;not null" json:"course_desc"`
-	Price              uint32       	`gorm:"default:0" json:"price"`
-	Duration           uint32    		`gorm:"default:0" json:"duration"`
-	IsFree			   bool				`gorm:"default:false" json:"is_free"`
-	IsOnline		   bool				`gorm:"default:false" json:"is_online"`
-	OpeningImage	   string			`gorm:"size:255;null" json:"course_op_img_url"`
-	SoftDelete         bool      		`gorm:"default:false" json:"soft_delete"`
-	CreatedAt          time.Time 		`gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt          time.Time 		`gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	DeleteAt           time.Time 		`gorm:"default:CURRENT_TIMESTAMP" json:"delete_at"`
+	ID               uint32         `gorm:"primary_key;auto_increment" json:"id"`
+	CourseCategoryID uint32         `sql:"type:int REFERENCES coursecategories(id)"json:"course_category_id"`
+	CourseCategory   CourseCategory `json:"course_category"`
+	User             User           `json:"user"`
+	UserID           uint32         `sql:"type:int REFERENCES users(id)" json:"user_id"`
+	Name             string         `gorm:"size:255;not null" json:"course_name"`
+	Description      string         `gorm:"size:255;not null" json:"course_desc"`
+	Price            uint32         `gorm:"default:0" json:"price"`
+	Duration         uint32         `gorm:"default:0" json:"duration"`
+	IsFree           bool           `gorm:"default:false" json:"is_free"`
+	IsOnline         bool           `gorm:"default:false" json:"is_online"`
+	OpeningImage     string         `gorm:"size:255;null" json:"course_op_img_url"`
+	SoftDelete       bool           `gorm:"default:false" json:"soft_delete"`
+	CreatedAt        time.Time      `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt        time.Time      `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
+	DeleteAt         time.Time      `gorm:"default:CURRENT_TIMESTAMP" json:"delete_at"`
 }
 
 func (p *Course) Prepare() {
@@ -49,7 +50,7 @@ func (p *Course) Validate() error {
 	if p.Description == "" {
 		return errors.New("Required Description of Course detail")
 	}
-	if p.CourseCategoryID <1 {
+	if p.CourseCategoryID < 1 {
 		return errors.New("Required Course Category to Asseign Name")
 	}
 	if p.UserID < 1 {
@@ -79,7 +80,7 @@ func (p *Course) SaveCourse(db *gorm.DB) (*Course, error) {
 func (p *Course) FindAllCourses(db *gorm.DB) (*[]Course, error) {
 	var err error
 	courses := []Course{}
-	err = db.Debug().Model(&Course{}).Limit(100).Find(&courses).Error
+	err = db.Debug().Model(&Course{}).Where("soft_delete=?", false).Limit(100).Find(&courses).Error
 	if err != nil {
 		return &[]Course{}, err
 	}
@@ -97,7 +98,7 @@ func (p *Course) FindAllCourses(db *gorm.DB) (*[]Course, error) {
 func (p *Course) FindAllCoursesCheap(db *gorm.DB) (*[]Course, error) {
 	var err error
 	courses := []Course{}
-	err = db.Debug().Model(&Course{}).Order("price desc").Limit(100).Find(&courses).Error
+	err = db.Debug().Model(&Course{}).Order("price asc").Limit(100).Find(&courses).Error
 	if err != nil {
 		return &[]Course{}, err
 	}
@@ -115,7 +116,7 @@ func (p *Course) FindAllCoursesCheap(db *gorm.DB) (*[]Course, error) {
 func (p *Course) FindAllCoursesExpensive(db *gorm.DB) (*[]Course, error) {
 	var err error
 	courses := []Course{}
-	err = db.Debug().Model(&Course{}).Order("price asc").Limit(100).Find(&courses).Error
+	err = db.Debug().Model(&Course{}).Order("price desc").Limit(100).Find(&courses).Error
 	if err != nil {
 		return &[]Course{}, err
 	}
@@ -133,7 +134,7 @@ func (p *Course) FindAllCoursesExpensive(db *gorm.DB) (*[]Course, error) {
 func (p *Course) FindAllCoursesFree(db *gorm.DB) (*[]Course, error) {
 	var err error
 	courses := []Course{}
-	err = db.Debug().Model(&Course{}).Where("price =? or isFree=?", 0, true).Limit(100).Find(&courses).Error
+	err = db.Debug().Model(&Course{}).Where("price =? or is_Free=?", 0, true).Limit(100).Find(&courses).Error
 	if err != nil {
 		return &[]Course{}, err
 	}
@@ -148,19 +149,22 @@ func (p *Course) FindAllCoursesFree(db *gorm.DB) (*[]Course, error) {
 	return &courses, nil
 }
 
-func (p *Course) SearchCourseName(db *gorm.DB, name string) (*Course, error) {
+func (p *Course) SearchCourseName(db *gorm.DB, name string) (*[]Course, error) {
 	var err error
-	err = db.Debug().Model(&Course{}).Where("name = ?", name).Take(&p).Error
+	courses := []Course{}
+	err = db.Debug().Model(&Course{}).Where("soft_delete=? and name LIKE ?", false, "%"+name+"%").Limit(100).Find(&courses).Error
 	if err != nil {
-		return &Course{}, err
+		return &[]Course{}, err
 	}
-	if p.ID != 0 {
-		err = db.Debug().Model(&User{}).Where("id = ?", p.UserID).Take(&p.User).Error
-		if err != nil {
-			return &Course{}, err
+	if len(courses) > 0 {
+		for i, _ := range courses {
+			err := db.Debug().Model(&User{}).Where("id = ?", courses[i].UserID).Take(&courses[i].User).Error
+			if err != nil {
+				return &[]Course{}, err
+			}
 		}
 	}
-	return p, nil
+	return &courses, nil
 }
 
 func (p *Course) FindCourseByID(db *gorm.DB, pid uint64) (*Course, error) {
@@ -178,26 +182,45 @@ func (p *Course) FindCourseByID(db *gorm.DB, pid uint64) (*Course, error) {
 	return p, nil
 }
 
-func (p *Course) UpdateACourse(db *gorm.DB) (*Course, error) {
-
+func (p *Course) UpdateACourse(db *gorm.DB, pid uint64) (*Course, error) {
 	var err error
-	err = db.Debug().Model(&Course{}).Where("id = ?", p.ID).Updates(Course{Name: p.Name, Description: p.Description, Price: p.Price, IsFree: p.IsFree, Duration: p.Duration, OpeningImage: p.OpeningImage, IsOnline: p.IsOnline,UpdatedAt: time.Now()}).Error
+	fmt.Sprintf("%v", pid)
+	err = db.Debug().Model(&Course{}).Where("id = ?", pid).Updates(Course{Name: p.Name, Description: p.Description, Price: p.Price, IsFree: p.IsFree, Duration: p.Duration, OpeningImage: p.OpeningImage, IsOnline: p.IsOnline, UpdatedAt: time.Now()}).Error
 	if err != nil {
 		return &Course{}, err
 	}
+
 	if p.ID != 0 {
 		err = db.Debug().Model(&User{}).Where("id = ?", p.UserID).Take(&p.User).Error
 		if err != nil {
 			return &Course{}, err
 		}
 	}
+
 	return p, nil
 }
 
-func (p *Course) DeleteACourse(db *gorm.DB, pid uint64, uid uint32) (*Course, error) {
+func (u *Course) GetCourseCount(db *gorm.DB) (int, error) {
+	count := 0
+	result := db.Debug().Model(Course{}).Where("soft_delete = ?", false).Count(&count)
+	if result != nil {
+		return count, nil
+	}
+	return count, nil
+}
 
+func (u *Course) GetFreeCourseCount(db *gorm.DB) (int, error) {
+	count := 0
+	result := db.Debug().Model(Course{}).Where("is_free = ? and price = ? and soft_delete = ?", true, 0, false).Count(&count)
+	if result != nil {
+		return count, nil
+	}
+	return count, nil
+}
+
+func (p *Course) DeleteACourse(db *gorm.DB, uid uint32) (*Course, error) {
 	var err error
-	err = db.Debug().Model(&Course{}).Where("id = ?", p.ID).Updates(Course{SoftDelete: true, DeleteAt: time.Now()}).Error
+	err = db.Debug().Model(&Course{}).Where("id = ?", uid).Updates(Course{SoftDelete: true, DeleteAt: time.Now()}).Error
 	if err.Error != nil {
 		return &Course{}, db.Error
 	}

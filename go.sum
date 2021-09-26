@@ -2,6 +2,8 @@ github.com/PuerkitoBio/goquery v1.5.1/go.mod h1:GsLWisAFVj4WgDibEWF4pvYnkVQBpKBK
 github.com/andybalholm/cascadia v1.1.0/go.mod h1:GsXiBklL0woXo1j/WYWtSYYC4ouU9PqHO0sqidkEA4Y=
 github.com/badoux/checkmail v1.2.1 h1:TzwYx5pnsV6anJweMx2auXdekBwGr/yt1GgalIx9nBQ=
 github.com/badoux/checkmail v1.2.1/go.mod h1:XroCOBU5zzZJcLvgwU15I+2xXyCdTWXyR9MGfRhBYy0=
+github.com/cbrake/golang.org-x-image v0.0.1 h1:XpW+naEeHKGbNHOP0pD5MLlTZB4BS0h2Rw6rrcFIqYM=
+github.com/cbrake/golang.org-x-image v0.0.1/go.mod h1:anXjG3yftuws8q3nWNxqMfkLzESZ8khlLxFHJj212j4=
 github.com/cloudinary/cloudinary-go v1.3.0 h1:3cydHDSw+GooFcyq8PBEKMHoV9IRqAPiLv6YaE/X0wk=
 github.com/cloudinary/cloudinary-go v1.3.0/go.mod h1:V1AhCEPFlSN2FN3OosHgu4iX1SkusvDCgfSE7eU79Vo=
 github.com/creasty/defaults v1.5.1 h1:j8WexcS3d/t4ZmllX4GEkl4wIB/trOr035ajcLHCISM=

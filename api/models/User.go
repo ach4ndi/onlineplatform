@@ -2,11 +2,12 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"html"
 	"log"
 	"strings"
 	"time"
-	
+
 	//"github.com/ach4ndi/onlineplatform/api/models"
 	"github.com/badoux/checkmail"
 	"github.com/jinzhu/gorm"
@@ -14,16 +15,16 @@ import (
 )
 
 type User struct {
-	ID            uint32       `gorm:"primary_key;auto_increment" json:"id"`
-	UserStatusID  uint32       `sql:"type:int REFERENCES userstatus(id)" json:"user_status_id"`
-	UserStatus    UserStatus   `json:"user_status"`
-	Name          string       `gorm:"size:255;not null;unique" json:"name"`
-	Email         string       `gorm:"size:100;not null;unique" json:"email"`
-	Password      string       `gorm:"size:100;not null;" json:"password"`
-	SoftDelete    bool         `gorm:"default:false" json:"soft_delete"`
-	CreatedAt     time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt     time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	DeleteAt      time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"delete_at"`
+	ID           uint32     `gorm:"primary_key;auto_increment" json:"id"`
+	UserStatusID uint32     `sql:"type:int REFERENCES userstatus(id)" json:"user_status_id"`
+	UserStatus   UserStatus `json:"user_status"`
+	Name         string     `gorm:"size:255;not null;unique" json:"name"`
+	Email        string     `gorm:"size:100;not null;unique" json:"email"`
+	Password     string     `gorm:"size:100;not null;" json:"password"`
+	SoftDelete   bool       `gorm:"default:false" json:"soft_delete"`
+	CreatedAt    time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt    time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
+	DeleteAt     time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"delete_at"`
 }
 
 func Hash(password string) ([]byte, error) {
@@ -111,7 +112,7 @@ func (u *User) SaveUser(db *gorm.DB) (*User, error) {
 func (u *User) FindAllUsers(db *gorm.DB) (*[]User, error) {
 	var err error
 	users := []User{}
-	err = db.Debug().Model(&User{}).Where("SoftDelete = ?", false).Limit(100).Find(&users).Error
+	err = db.Debug().Model(&User{}).Where("soft_delete = ?", false).Limit(100).Find(&users).Error
 	if err != nil {
 		return &[]User{}, err
 	}
@@ -130,6 +131,16 @@ func (u *User) FindUserByID(db *gorm.DB, uid uint32) (*User, error) {
 	return u, err
 }
 
+func (u *User) GetUserCount(db *gorm.DB) (int, error) {
+	count := 0
+	result := db.Debug().Model(User{}).Where("soft_delete = ?", false).Count(&count)
+	if result != nil {
+		return count, nil
+	}
+	fmt.Printf("Count %d", uint64(count))
+	return count, nil
+}
+
 func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
 
 	// To hash the password
@@ -139,10 +150,10 @@ func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
 	}
 	db = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).UpdateColumns(
 		map[string]interface{}{
-			"password":  u.Password,
-			"name":  u.Name,
-			"email":     u.Email,
-			"update_at": time.Now(),
+			"password":   u.Password,
+			"name":       u.Name,
+			"email":      u.Email,
+			"updated_at": time.Now(),
 		},
 	)
 	if db.Error != nil {
@@ -165,8 +176,8 @@ func (u *User) DeleteAUser(db *gorm.DB, uid uint32) (int64, error) {
 	}
 	db = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).UpdateColumns(
 		map[string]interface{}{
-			"soft_delete":  true,
-			"delete_at": time.Now(),
+			"soft_delete": true,
+			"delete_at":   time.Now(),
 		},
 	)
 	if db.Error != nil {

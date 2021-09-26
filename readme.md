@@ -14,3 +14,4 @@ go get github.com/jinzhu/gorm/dialects/sqlite
 go get github.com/joho/godotenv
 go get gopkg.in/go-playground/assert.v1
 go get github.com/cloudinary/cloudinary-go
+go get github.com/cbrake/golang.org-x-image

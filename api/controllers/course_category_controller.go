@@ -1,20 +1,21 @@
 package controllers
 
 import (
-	"github.com/joho/godotenv"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
+
 	"github.com/ach4ndi/onlineplatform/api/auth"
 	"github.com/ach4ndi/onlineplatform/api/models"
 	"github.com/ach4ndi/onlineplatform/api/responses"
 	"github.com/ach4ndi/onlineplatform/api/utils/formaterror"
 	"github.com/gorilla/mux"
-	"encoding/json"
-	"errors"
-	"io/ioutil"
-	"fmt"
-	"net/http"
-	"strconv"
-	"log"
-	"os"
+	"github.com/joho/godotenv"
 )
 
 func (server *Server) GetCourseCategories(w http.ResponseWriter, r *http.Request) {
@@ -69,10 +70,6 @@ func (server *Server) UpdateCourseCategory(w http.ResponseWriter, r *http.Reques
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
 		return
 	}
-	if tokenID != uint32(uid) {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-		return
-	}
 
 	err = godotenv.Load()
 	if err != nil {
@@ -81,24 +78,27 @@ func (server *Server) UpdateCourseCategory(w http.ResponseWriter, r *http.Reques
 		fmt.Println("We are getting the env values")
 	}
 
-	limit_level, err := strconv.Atoi(os.Getenv("LIMITLV")) 
+	limit_level, err := strconv.Atoi(os.Getenv("LIMITLV"))
 
-	user := User{}
-	user = user.FindUserByID(tokenID).Take(&u).Error
-	if user != nil {
-		if user.UserStatus.LevelNum != limit_level{
-			responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-			return
-		}
+	user = models.User{}
+	userGotten, err := user.FindUserByID(server.DB, tokenID)
+
+	userst := models.UserStatus{}
+	userstatusGotten, err := userst.FindUserStatusByID(server.DB, userGotten.UserStatusID)
+
+	if userstatusGotten.LevelNum != uint32(limit_level) {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
 	}
-	
+
 	user.Prepare()
 	err = user.Validate("update")
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	updatedCourseCategory, err := coursecategory.UpdateACourse(server.DB, uint32(uid))
+
+	updatedCourseCategory, err := coursecategory.UpdateACourseCategory(server.DB, uint32(uid))
 	if err != nil {
 		formattedError := formaterror.FormatError(err.Error())
 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
@@ -122,10 +122,6 @@ func (server *Server) DeleteCourseCategory(w http.ResponseWriter, r *http.Reques
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
 		return
 	}
-	if tokenID != 0 && tokenID != uint32(uid) {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-		return
-	}
 
 	err = godotenv.Load()
 	if err != nil {
@@ -134,14 +130,17 @@ func (server *Server) DeleteCourseCategory(w http.ResponseWriter, r *http.Reques
 		fmt.Println("We are getting the env values")
 	}
 
-	limit_level = strconv.Atoi(os.Getenv("LIMITLV")) 
+	limit_level, err := strconv.Atoi(os.Getenv("LIMITLV"))
 
-	err = db.Debug().Model(User{}).Where("id = ?", tokenID).Take(&u).Error
-	if err != nil {
-		if err.UserStatus.LevelNum != limit_level{
-			responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-			return
-		}
+	user := models.User{}
+	userGotten, err := user.FindUserByID(server.DB, tokenID)
+
+	userst := models.UserStatus{}
+	userstatusGotten, err := userst.FindUserStatusByID(server.DB, userGotten.UserStatusID)
+
+	if userstatusGotten.LevelNum != uint32(limit_level) {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
 	}
 
 	_, err = coursecategory.DeleteACourseCategory(server.DB, uint32(uid))
@@ -167,14 +166,17 @@ func (server *Server) CreateCourseCategory(w http.ResponseWriter, r *http.Reques
 		fmt.Println("We are getting the env values")
 	}
 
-	limit_level = strconv.Atoi(os.Getenv("LIMITLV")) 
+	limit_level, err := strconv.Atoi(os.Getenv("LIMITLV"))
 
-	err = db.Debug().Model(User{}).Where("id = ?", tokenID).Take(&u).Error
-	if err != nil {
-		if err.UserStatus.LevelNum != limit_level{
-			responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-			return
-		}
+	user := models.User{}
+	userGotten, err := user.FindUserByID(server.DB, tokenID)
+
+	userst := models.UserStatus{}
+	userstatusGotten, err := userst.FindUserStatusByID(server.DB, userGotten.UserStatusID)
+
+	if userstatusGotten.LevelNum != uint32(limit_level) {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
@@ -182,13 +184,11 @@ func (server *Server) CreateCourseCategory(w http.ResponseWriter, r *http.Reques
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 	}
 	coursecategory := models.CourseCategory{}
-	err = json.Unmarshal(body, &user)
+	err = json.Unmarshal(body, &coursecategory)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-
-
 
 	coursecategory.Prepare()
 	err = coursecategory.Validate("")

@@ -1,15 +1,22 @@
 package controllers
 
 import (
-	"github.com/joho/godotenv"
-	"github.com/ach4ndi/onlineplatform/api/auth"
-	//"github.com/ach4ndi/onlineplatform/api/models"
-	"github.com/ach4ndi/onlineplatform/api/responses"
-	"github.com/ach4ndi/onlineplatform/api/utils/formaterror"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/ach4ndi/onlineplatform/api/auth"
+	"github.com/ach4ndi/onlineplatform/api/models"
+	"github.com/ach4ndi/onlineplatform/api/responses"
+	"github.com/ach4ndi/onlineplatform/api/utils/formaterror"
+	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
+	"golang.org/x/crypto/bcrypt"
+
 	//"github.com/google/uuid"
 	//"strings"
 	"os"
@@ -42,6 +49,22 @@ func (server *Server) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	responses.JSON(w, http.StatusOK, token)
+}
+
+func (server *Server) SignIn(email, password string) (string, error) {
+	var err error
+
+	user := models.User{}
+
+	err = server.DB.Debug().Model(models.User{}).Where("email = ?", email).Take(&user).Error
+	if err != nil {
+		return "", err
+	}
+	err = models.VerifyPassword(user.Password, password)
+	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+		return "", err
+	}
+	return auth.CreateToken(user.ID)
 }
 
 func (server *Server) UserRegister(w http.ResponseWriter, r *http.Request) {
@@ -161,10 +184,6 @@ func (server *Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
 		return
 	}
-	if tokenID != 0 && tokenID != uint32(uid) {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-		return
-	}
 
 	err = godotenv.Load()
 	if err != nil {
@@ -173,14 +192,17 @@ func (server *Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("We are getting the env values")
 	}
 
-	limit_level = strconv.Atoi(os.Getenv("LIMITLV")) 
+	limit_level, err := strconv.Atoi(os.Getenv("LIMITLV"))
 
-	err = db.Debug().Model(User{}).Where("id = ?", tokenID).Take(&u).Error
-	if err != nil {
-		if err.UserStatus.LevelNum != limit_level{
-			responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-			return
-		}
+	user = models.User{}
+	userGotten, err := user.FindUserByID(server.DB, tokenID)
+
+	userst := models.UserStatus{}
+	userstatusGotten, err := userst.FindUserStatusByID(server.DB, userGotten.UserStatusID)
+
+	if userstatusGotten.LevelNum != uint32(limit_level) {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
 	}
 
 	_, err = user.DeleteAUser(server.DB, uint32(uid))
@@ -192,11 +214,10 @@ func (server *Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusNoContent, "")
 }
 
-
 func (server *Server) GetUserAllStatus(w http.ResponseWriter, r *http.Request) {
 	user_status := models.UserStatus{}
 
-	users, err := user_status.FindAllUsers(server.DB)
+	users, err := user_status.FindAllUserStatus(server.DB)
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
@@ -243,21 +264,18 @@ func (server *Server) UpdateUserStatus(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
 		return
 	}
-	if tokenID != uint32(uid) {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-		return
-	}
-	if tokenID != uint32(uid) {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-		return
-	}
 
-	err = db.Debug().Model(User{}).Where("id = ?", tokenID).Take(&u).Error
-	if err != nil {
-		if err.UserStatus.LevelNum != 1{
-			responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-			return
-		}
+	limit_level, err := strconv.Atoi(os.Getenv("LIMITLV"))
+
+	user := models.User{}
+	userGotten, err := user.FindUserByID(server.DB, tokenID)
+
+	userst := models.UserStatus{}
+	userstatusGotten, err := userst.FindUserStatusByID(server.DB, userGotten.UserStatusID)
+
+	if userstatusGotten.LevelNum != uint32(limit_level) {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
 	}
 
 	userstatus.Prepare()
@@ -290,10 +308,6 @@ func (server *Server) DeleteUserStatus(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
 		return
 	}
-	if tokenID != 0 && tokenID != uint32(uid) {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-		return
-	}
 
 	err = godotenv.Load()
 	if err != nil {
@@ -302,14 +316,17 @@ func (server *Server) DeleteUserStatus(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("We are getting the env values")
 	}
 
-	limit_level = strconv.Atoi(os.Getenv("LIMITLV")) 
+	limit_level, err := strconv.Atoi(os.Getenv("LIMITLV"))
 
-	err = db.Debug().Model(User{}).Where("id = ?", tokenID).Take(&u).Error
-	if err != nil {
-		if err.UserStatus.LevelNum != limit_level{
-			responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-			return
-		}
+	user := models.User{}
+	userGotten, err := user.FindUserByID(server.DB, tokenID)
+
+	userst := models.UserStatus{}
+	userstatusGotten, err := userst.FindUserStatusByID(server.DB, userGotten.UserStatusID)
+
+	if userstatusGotten.LevelNum != uint32(limit_level) {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
 	}
 
 	_, err = user_status.DeleteAUserStatus(server.DB, uint32(uid))
@@ -321,13 +338,13 @@ func (server *Server) DeleteUserStatus(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusNoContent, "")
 }
 
-func (server *Server) CreateUserCategory(w http.ResponseWriter, r *http.Request) {
+func (server *Server) CreateUserStatus(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 	}
-	usercategory := models.UserCategory{}
-	err = json.Unmarshal(body, &user)
+	usercategory := models.UserStatus{}
+	err = json.Unmarshal(body, &usercategory)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
@@ -346,16 +363,19 @@ func (server *Server) CreateUserCategory(w http.ResponseWriter, r *http.Request)
 		fmt.Println("We are getting the env values")
 	}
 
-	limit_level = strconv.Atoi(os.Getenv("LIMITLV")) 
+	limit_level, err := strconv.Atoi(os.Getenv("LIMITLV"))
 
-	err = db.Debug().Model(User{}).Where("id = ?", tokenID).Take(&u).Error
-	if err != nil {
-		if err.UserStatus.LevelNum != limit_level{
-			responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-			return
-		}
+	user := models.User{}
+	userGotten, err := user.FindUserByID(server.DB, tokenID)
+
+	userst := models.UserStatus{}
+	userstatusGotten, err := userst.FindUserStatusByID(server.DB, userGotten.UserStatusID)
+
+	if userstatusGotten.LevelNum != uint32(limit_level) {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
 	}
-	
+
 	usercategory.Prepare()
 	err = usercategory.Validate("")
 	if err != nil {
