@@ -16,9 +16,8 @@ go get gopkg.in/go-playground/assert.v1
 go get github.com/cloudinary/cloudinary-go
 go get github.com/cbrake/golang.org-x-image
 ```
-After already install all module, then running go run main.go
+After already install all module, then edit .env file to filling up value.
 
-before run `go run main.go`
 ```
 # cloudinary
 CLOUDINARY_CLOUDNAME={get from cloudinary}
@@ -50,7 +49,6 @@ SEED_LOAD=0
 ```
  notes:
  
-
  - if you want regenerate sampledata from seed data, just set SEED_LOAD to 1.
  - LIMITLV is confugiration number to check the user is admin or not, make sure add data user status with level_num following LIMITLV .
 	 ```
@@ -59,5 +57,30 @@ SEED_LOAD=0
 		"level_num":1
 	}
 	```
-- if you want using cloudinary, register to get api key.
-- 
+- if you want using cloudinary, register to [get api key](https://cloudinary.com/). After register you will get key, filling it on cloudinary field on .env file
+- you can change web port on .env, default 8080
+- mysql configuration is depend on your provider if you deploy to online hosting, or local.
+- api secret can be filled by anything you want.
+- IMG_DIR is for location local image upload, if you not used cloudiary, it will placed on same dir with main.go location.
+- IMG_LIMIT upload in MB, default 10 MB
+
+After all is configurated you can run 
+```
+go run main.go
+```
+
+ ## Running Heroku
+ 
+ 
+ ## Access Api
+ 
+ Im using postman for save some format data and list of api for this golang project.
+ 
+ - onlineplatform.json export to collection
+ - onlineplatform_environment.json export to enviroment
+ 
+ here for interface of collection:
+ 
+ ![](img_s_1.png)
+ 
+ ![](img_s_2.png)
