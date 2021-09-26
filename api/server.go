@@ -50,5 +50,7 @@ func Run() {
 		}
 	}
 
+	fmt.Println("PORT : " + os.Getenv("PORT"))
+	fmt.Println("WEB_PORT : " + os.Getenv("WEB_PORT"))
 	server.Run(os.Getenv("WEB_PORT"))
 }
