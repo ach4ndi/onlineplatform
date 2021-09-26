@@ -81,7 +81,11 @@ go run main.go
 
 To disable ssl problem, you should add the url to delete domain security policies. on [chrome://net-internals/#hsts](chrome://net-internals/#hsts)
 
- jadi gak bisa ngetes diheroku
+For alternative, deploying this app on flashdrive.
+
+```http://ybxaecgqod.uswest02.fldrv.com:8000```
+ 
+ you can access url and using on postman.
  
  ## Access Api
  
