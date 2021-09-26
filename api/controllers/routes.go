@@ -44,5 +44,4 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/course_search", middlewares.SetMiddlewareJSON(s.SearchCourse)).Methods("POST")
 	s.Router.HandleFunc("/popular_course_category", middlewares.SetMiddlewareJSON(s.PopularUserCourse)).Methods("GET")
 	s.Router.HandleFunc("/stat", middlewares.SetMiddlewareAuthentication(middlewares.SetMiddlewareJSON(s.Stat))).Methods("GET")
-	s.Router.HandleFunc("/.well-known/pki-validation/2CA1514AFF53D3A621FDF4FF93BCDCBB.txt", middlewares.SetMiddlewareJSON(s.PKI))
 }

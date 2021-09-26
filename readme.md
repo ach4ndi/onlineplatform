@@ -74,6 +74,8 @@ go run main.go
  https://go-onlineplatform.heroku.com:42756
 
  terkendala cert dan free account hanya aktif 1 jam lalu down..
+
+ jadi gak bisa ngetes diheroku
  
  ## Access Api
  

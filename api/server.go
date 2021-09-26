@@ -50,6 +50,5 @@ func Run() {
 		}
 	}
 
-	fmt.Println("Heroku Port : " + os.Getenv("PORT"))
-	server.Run(os.Getenv("PORT"))
+	server.Run(os.Getenv("WEB_PORT"))
 }
