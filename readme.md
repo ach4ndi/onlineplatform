@@ -91,8 +91,8 @@ For alternative, deploying this app on flashdrive.
  
  Im using postman for save some format data and list of api for this golang project.
  
- - onlineplatform.json export to collection
- - onlineplatform_environment.json export to enviroment
+ - onlineplatform.json import to your collection
+ - onlineplatform_environment.json import to  your enviroment
  
  here for interface of collection:
  
