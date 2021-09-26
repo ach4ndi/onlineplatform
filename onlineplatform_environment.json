@@ -1,0 +1,24 @@
+{
+	"id": "c9edd1c6-12d4-44f3-9c3b-3680412075b0",
+	"name": "onlineplatform",
+	"values": [
+		{
+			"key": "url_api",
+			"value": "http://localhost",
+			"enabled": true
+		},
+		{
+			"key": "url_port",
+			"value": "5000",
+			"enabled": true
+		},
+		{
+			"key": "token",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJleHAiOjE2MzI2NTk5MTIsInVzZXJfaWQiOjF9.zIALr7i0agIzO1vSv5n_S_8RUORMeJwff1OjLlwYK_A",
+			"enabled": true
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2021-09-26T12:03:26.813Z",
+	"_postman_exported_using": "Postman/7.20.1"
+}

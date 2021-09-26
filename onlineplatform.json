@@ -1,0 +1,826 @@
+{
+	"info": {
+		"_postman_id": "1cd24903-5add-48bd-b6b0-1b3f01284ac5",
+		"name": "cl12",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "user",
+			"item": [
+				{
+					"name": "User List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/user",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"user"
+							],
+							"query": [
+								{
+									"key": "{url}",
+									"value": null,
+									"disabled": true
+								}
+							]
+						},
+						"description": "user list"
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@gmail.com\",\n    \"password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/login",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"Burhan\",\n    \"email\": \"burhan@gmail.com\",\n    \"password\": \"password\",\n    \"user_status_id\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/register",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/user/1",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"user",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\" : \"Jake\",\n    \"email\": \"admin@gmail.com\",\n    \"password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/user/1",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"user",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "soft user delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/user/8",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"user",
+								"8"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "user status",
+			"item": [
+				{
+					"name": "get list if user status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/user_status",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"user_status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "add data user status",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"level_name\": \"Pegawai\",\n\t\"level_num\":4\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/user_status",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"user_status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get selected by id user status",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/user_status/4",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"user_status",
+								"4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update data by id user status",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"level_name\": \"Pegawai Pagi\",\n\t\"level_num\":4\n}",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/user_status/4",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"user_status",
+								"4"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "course",
+			"item": [
+				{
+					"name": "list all course",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/course",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"course"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list all course (low > high)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/course_low",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"course_low"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list all course (high> low)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/course_high",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"course_high"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list all course (free)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/course_free",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"course_free"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "add new course",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "course_name",
+									"value": "Cara Makan yang baik dan benar",
+									"type": "text"
+								},
+								{
+									"key": "course_category_id",
+									"value": "5",
+									"type": "text"
+								},
+								{
+									"key": "course_desc",
+									"value": "Tutorial yang berisi cara terbaik dan benar dalam bermakan",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "0",
+									"type": "text"
+								},
+								{
+									"key": "duration",
+									"value": "7",
+									"type": "text"
+								},
+								{
+									"key": "is_free",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "is_online",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "opening_image",
+									"type": "file",
+									"src": "/D:/Document/Image/-/68307688_p0a.jpg"
+								}
+							],
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/course",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"course"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get data by id course",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/course/5",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"course",
+								"5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update data by id course",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "course_name",
+									"value": "Cara Makan yang baik dan benar",
+									"type": "text"
+								},
+								{
+									"key": "course_category_id",
+									"value": "5",
+									"type": "text"
+								},
+								{
+									"key": "course_desc",
+									"value": "Tutorial yang berisi cara terbaik dan benar dalam bermakan (durasi 1 minggu)",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "0",
+									"type": "text"
+								},
+								{
+									"key": "duration",
+									"value": "7",
+									"type": "text"
+								},
+								{
+									"key": "is_free",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "is_online",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "opening_image",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "opening_image_update",
+									"value": "0",
+									"type": "text"
+								}
+							],
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/course/5",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"course",
+								"5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "soft delete data by id course",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/course/5",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"course",
+								"5"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "course category",
+			"item": [
+				{
+					"name": "list all data course category",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\" : \"Memasak\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/course_category",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"course_category"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get data by id course category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/course_category/6",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"course_category",
+								"6"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "soft delete by id course category",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/course_category/6",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"course_category",
+								"6"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update data by id course category",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\" : \"Memasak Chef\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/course_category/6",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"course_category",
+								"6"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Others",
+			"item": [
+				{
+					"name": "Stat",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/stat",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"stat"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Course Search by name",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"search\": \"Pembelajaran\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/course_search",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"course_search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Popular Course Category",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"search\": \"Pembelajaran\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url_api}}:{{url_port}}/popular_course_category",
+							"host": [
+								"{{url_api}}"
+							],
+							"port": "{{url_port}}",
+							"path": [
+								"popular_course_category"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
