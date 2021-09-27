@@ -515,47 +515,51 @@
 							"formdata": [
 								{
 									"key": "course_name",
-									"value": "Cara Makan yang baik dan benar",
+									"value": "Pencak Silat",
 									"type": "text"
 								},
 								{
 									"key": "course_category_id",
-									"value": "5",
+									"value": "1",
 									"type": "text"
 								},
 								{
 									"key": "course_desc",
-									"value": "Tutorial yang berisi cara terbaik dan benar dalam bermakan (durasi 1 minggu)",
+									"value": "Belajar Pencak Silat dengan baik dan benar selama 3 bulan, course ditempat",
 									"type": "text"
 								},
 								{
 									"key": "price",
-									"value": "0",
+									"value": "200000",
 									"type": "text"
 								},
 								{
 									"key": "duration",
-									"value": "7",
+									"value": "90",
+									"description": "day",
 									"type": "text"
 								},
 								{
 									"key": "is_free",
-									"value": "1",
+									"value": "0",
+									"description": "0 - false ; 1 - true",
 									"type": "text"
 								},
 								{
 									"key": "is_online",
-									"value": "1",
+									"value": "0",
+									"description": "0 - false ; 1 - true",
 									"type": "text"
 								},
 								{
 									"key": "opening_image",
 									"type": "file",
-									"src": []
+									"src": "/D:/Download/1024px-DSC_3099_wikimedia2020_deni_dahniel_atraksi_silek_minagkabau.jpg"
 								},
 								{
 									"key": "opening_image_update",
-									"value": "0",
+									"value": "1",
+									"description": "0 - false ; 1 - true",
 									"type": "text"
 								}
 							],
@@ -566,14 +570,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{url_api}}:{{url_port}}/course/5",
+							"raw": "{{url_api}}:{{url_port}}/course/1",
 							"host": [
 								"{{url_api}}"
 							],
 							"port": "{{url_port}}",
 							"path": [
 								"course",
-								"5"
+								"1"
 							]
 						}
 					},
