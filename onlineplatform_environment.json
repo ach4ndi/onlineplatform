@@ -4,21 +4,21 @@
 	"values": [
 		{
 			"key": "url_api",
-			"value": "http://localhost",
+			"value": "http://ybxaecgqod.uswest02.fldrv.com",
 			"enabled": true
 		},
 		{
 			"key": "url_port",
-			"value": "5000",
+			"value": "80",
 			"enabled": true
 		},
 		{
 			"key": "token",
-			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJleHAiOjE2MzI2NTk5MTIsInVzZXJfaWQiOjF9.zIALr7i0agIzO1vSv5n_S_8RUORMeJwff1OjLlwYK_A",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJleHAiOjE2MzI3MDg3MDIsInVzZXJfaWQiOjF9.5X6QT9Y8y_4qzGySL7VcgSKOJaU3aC3WPOGSVDpNqJI",
 			"enabled": true
 		}
 	],
 	"_postman_variable_scope": "environment",
-	"_postman_exported_at": "2021-09-26T12:03:26.813Z",
+	"_postman_exported_at": "2021-09-27T01:13:30.011Z",
 	"_postman_exported_using": "Postman/7.20.1"
 }
