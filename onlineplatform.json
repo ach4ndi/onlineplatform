@@ -11,16 +11,26 @@
 				{
 					"name": "User List",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url_api}}:{{url_port}}/user",
+							"raw": "{{url_api}}:{{url_port}}/stat",
 							"host": [
 								"{{url_api}}"
 							],
 							"port": "{{url_port}}",
 							"path": [
-								"user"
+								"stat"
 							],
 							"query": [
 								{
