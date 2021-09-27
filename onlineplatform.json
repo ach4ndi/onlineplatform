@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "1cd24903-5add-48bd-b6b0-1b3f01284ac5",
+		"_postman_id": "45df3a1f-aae7-432d-994d-72e53d1e163e",
 		"name": "cl12",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -24,13 +24,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url_api}}:{{url_port}}/stat",
+							"raw": "{{url_api}}:{{url_port}}/user",
 							"host": [
 								"{{url_api}}"
 							],
 							"port": "{{url_port}}",
 							"path": [
-								"stat"
+								"user"
 							],
 							"query": [
 								{
